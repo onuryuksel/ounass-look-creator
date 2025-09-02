@@ -43,60 +43,40 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API key not configured' });
     }
     
-    // Try different Gemini models for image generation
-    const models = [
-      'gemini-2.5-flash-image-preview',
-      'gemini-2.0-flash-exp',
-      'gemini-1.5-flash'
-    ];
+    // Use only gemini-2.5-flash-image-preview model
+    const model = 'gemini-2.5-flash-image-preview';
     
-    let lastError = null;
+    console.log(`Using model: ${model}`);
     
-    for (const model of models) {
-      try {
-        console.log(`Trying model: ${model}`);
-        
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-        console.log(`Model ${model} response status:`, response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.log(`Model ${model} error response:`, errorText);
-          lastError = `Model ${model} failed: ${response.status} ${response.statusText}`;
-          continue;
-        }
-
-        const result = await response.json();
-        console.log(`Model ${model} success response:`, JSON.stringify(result, null, 2));
-        
-        const generatedImagePart = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-
-        if (generatedImagePart && generatedImagePart.inlineData.data) {
-          const base64Data = generatedImagePart.inlineData.data;
-          console.log(`Image generated successfully with model ${model}`);
-          return res.json({ success: true, image: `data:image/png;base64,${base64Data}` });
-        } else {
-          console.log(`No image data found in response from model ${model}`);
-          lastError = `No image data in response from ${model}`;
-          continue;
-        }
-        
-      } catch (error) {
-        console.error(`Error with model ${model}:`, error);
-        lastError = `Model ${model} error: ${error.message}`;
-        continue;
-      }
+    console.log(`Model ${model} response status:`, response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log(`Model ${model} error response:`, errorText);
+      throw new Error(`Model ${model} failed: ${response.status} ${response.statusText}`);
     }
+
+    const result = await response.json();
+    console.log(`Model ${model} success response:`, JSON.stringify(result, null, 2));
     
-    // If we get here, all models failed
-    throw new Error(`All image generation models failed. Last error: ${lastError}`);
+    const generatedImagePart = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+
+    if (generatedImagePart && generatedImagePart.inlineData.data) {
+      const base64Data = generatedImagePart.inlineData.data;
+      console.log(`Image generated successfully with model ${model}`);
+      return res.json({ success: true, image: `data:image/png;base64,${base64Data}` });
+    } else {
+      console.log(`No image data found in response from model ${model}`);
+      throw new Error(`No image data in response from ${model}`);
+    }
 
   } catch (error) {
     console.error('Final error:', error);
