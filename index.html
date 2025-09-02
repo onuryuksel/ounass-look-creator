@@ -405,6 +405,13 @@
           const result = await response.json();
           
           if (result.success) {
+            // Log the definitive final prompt received back from the server
+            if (result.debug && result.debug.finalPrompt) {
+              console.log('%c--- DEFINITIVE PROMPT USED BY AI (from Server) ---', 'color: green; font-weight: bold; font-size: 14px;');
+              console.log(result.debug.finalPrompt);
+              console.log('%c----------------------------------------------------', 'color: green; font-weight: bold; font-size: 14px;');
+            }
+
             setGeneratedImage(result.image);
             setCurrentStep(4);
             const endTime = performance.now();
@@ -721,7 +728,7 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              <p className="text-xs text-gray-300 mt-1">v1.3.9</p>
+              <p className="text-xs text-gray-300 mt-1">v1.4.0</p>
             </div>
     
             {error && (

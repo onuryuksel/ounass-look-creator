@@ -22,8 +22,15 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API key not configured' });
     }
 
+    // --- NEW LOGIC: Use only categories in the prompt ---
+    // Extracting only the categories from the productList string
+    const categories = productList.match(/\(([^)]+)\)/g)?.map(c => c.replace(/[()]/g, '')) || [];
+    const categoryList = categories.join(', ');
+    const userQueryWithCategories = userQuery.replace(productList, categoryList);
+    // --- END NEW LOGIC ---
+
     const payload = {
-      contents: [{ parts: [{ text: userQuery }] }],
+      contents: [{ parts: [{ text: userQueryWithCategories }] }], // Use the category-based query
       systemInstruction: { parts: [{ text: systemPrompt }] },
     };
 

@@ -97,7 +97,12 @@ export default async function handler(req, res) {
     if (generatedImagePart && generatedImagePart.inlineData.data) {
       const base64Data = generatedImagePart.inlineData.data;
       console.log(`Image generated successfully with model ${model}`);
-      return res.json({ success: true, image: `data:image/png;base64,${base64Data}` });
+      // Return the final prompt along with the image for debugging transparency
+      return res.json({ 
+        success: true, 
+        image: `data:image/png;base64,${base64Data}`,
+        debug: { finalPrompt } 
+      });
     } else {
       console.log(`No image data found in response from model ${model}`);
       throw new Error(`No image data in response from ${model}`);
