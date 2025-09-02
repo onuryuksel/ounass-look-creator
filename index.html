@@ -177,8 +177,8 @@
             }
     
           } else if (type === 'lifestyle') {
-            const lifestylePrompt = `A professional lifestyle photo of a person wearing ${productList} in a sleek urban setting, with natural lighting, a candid shot, editorial style, high resolution.`;
-            setPrompts(prev => ({ ...prev, lifestyle: lifestylePrompt }));
+            // Lifestyle prompt'u başlangıçta boş bırak, sadece kullanıcı generate butonuna tıkladığında oluştur
+            setPrompts(prev => ({ ...prev, lifestyle: '' }));
           }
         } catch (e) {
           setError(`An error occurred while generating the prompt: ${e.message}`);
@@ -510,7 +510,7 @@
                         value={prompts.lifestyle}
                         onChange={(e) => setPrompts(prev => ({ ...prev, lifestyle: e.target.value }))}
                         className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Edit the prompt here..."
+                        placeholder="Click 'Generate Prompt' to create a custom lifestyle prompt based on your inputs..."
                       />
                     )}
                   </div>
