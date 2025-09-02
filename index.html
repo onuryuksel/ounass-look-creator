@@ -209,6 +209,10 @@
       const refreshPrompt = async (type) => {
         setLoadingState('GENERATING_PROMPTS');
         setError(null);
+        
+        // Performance tracking
+        const startTime = performance.now();
+        console.log(`[Timing] Starting ${type} prompt generation...`);
     
         const productDetails = Object.values(productImages).map(item => ({
           brand: item.brand,
@@ -219,17 +223,25 @@
     
         try {
           if (type === 'studio') {
+            console.log(`[Timing] Sending studio prompt request to Gemini API...`);
+            const apiStartTime = performance.now();
+            
             const response = await fetch('/api/gemini-prompt', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ type: 'studio', productList })
             });
 
+            const apiEndTime = performance.now();
+            console.log(`[Timing] Gemini API response received in ${Math.round(apiEndTime - apiStartTime)}ms`);
+
             if (!response.ok) throw new Error('API request failed');
             const result = await response.json();
             
             if (result.success) {
               setPrompts(prev => ({ ...prev, studio: result.prompt }));
+              const endTime = performance.now();
+              console.log(`[Timing] Studio prompt generation completed in ${Math.round(endTime - startTime)}ms`);
             } else {
               throw new Error(result.error || 'Failed to generate prompt');
             }
@@ -237,8 +249,12 @@
           } else if (type === 'lifestyle') {
             // Lifestyle prompt'u başlangıçta boş bırak, sadece kullanıcı generate butonuna tıkladığında oluştur
             setPrompts(prev => ({ ...prev, lifestyle: '' }));
+            const endTime = performance.now();
+            console.log(`[Timing] Lifestyle prompt reset completed in ${Math.round(endTime - startTime)}ms`);
           }
         } catch (e) {
+          const endTime = performance.now();
+          console.error(`[Timing] ${type} prompt generation failed after ${Math.round(endTime - startTime)}ms:`, e.message);
           setError(`An error occurred while generating the prompt: ${e.message}`);
         } finally {
           setLoadingState('IDLE');
@@ -259,6 +275,11 @@
       const generateLifestylePrompt = async () => {
         setLoadingState('GENERATING_PROMPTS');
         setError(null);
+        
+        // Performance tracking
+        const startTime = performance.now();
+        console.log(`[Timing] Starting lifestyle prompt generation with custom inputs...`);
+        
         try {
           const { location, mood, time, extra } = lifestyleInputs;
           const productDetails = Object.values(productImages).map(item => ({
@@ -268,6 +289,9 @@
           }));
           const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
     
+          console.log(`[Timing] Sending lifestyle prompt request to Gemini API...`);
+          const apiStartTime = performance.now();
+          
           const response = await fetch('/api/gemini-prompt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -278,16 +302,23 @@
             })
           });
 
+          const apiEndTime = performance.now();
+          console.log(`[Timing] Gemini API response received in ${Math.round(apiEndTime - apiStartTime)}ms`);
+
           if (!response.ok) throw new Error('API request failed');
           const result = await response.json();
           
           if (result.success) {
             setPrompts(prev => ({ ...prev, lifestyle: result.prompt }));
             setShowLifestyleForm(false);
+            const endTime = performance.now();
+            console.log(`[Timing] Lifestyle prompt generation completed in ${Math.round(endTime - startTime)}ms`);
           } else {
             throw new Error(result.error || 'Failed to generate prompt');
           }
         } catch (e) {
+          const endTime = performance.now();
+          console.error(`[Timing] Lifestyle prompt generation failed after ${Math.round(endTime - startTime)}ms:`, e.message);
           setError(`An error occurred while generating the prompt: ${e.message}`);
         } finally {
           setLoadingState('IDLE');
@@ -296,16 +327,30 @@
     
       // Helper function to convert a URL to a Base64 string
       const urlToBase64 = async (url) => {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            resolve(reader.result);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
+        const startTime = performance.now();
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const endTime = performance.now();
+              console.log(`[Timing] Base64 conversion for ${url.substring(0, 50)}... completed in ${Math.round(endTime - startTime)}ms`);
+              resolve(reader.result);
+            };
+            reader.onerror = (error) => {
+              const endTime = performance.now();
+              console.error(`[Timing] Base64 conversion failed after ${Math.round(endTime - startTime)}ms:`, error);
+              reject(error);
+            };
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          const endTime = performance.now();
+          console.error(`[Timing] Base64 conversion failed after ${Math.round(endTime - startTime)}ms:`, error);
+          throw error;
+        }
       };
     
       // Handles the final image generation call to the API
@@ -317,13 +362,26 @@
     
         setError(null);
         setLoadingState('UPLOADING_IMAGES');
+        
+        // Performance tracking
+        const startTime = performance.now();
+        console.log(`[Timing] Starting image generation process...`);
     
         try {
+          console.log(`[Timing] Converting images to base64...`);
+          const base64StartTime = performance.now();
+          
           const selectedImageUrls = Object.values(selectedImages);
           const base64Images = await Promise.all(selectedImageUrls.map(urlToBase64));
           
+          const base64EndTime = performance.now();
+          console.log(`[Timing] Base64 conversion completed in ${Math.round(base64EndTime - base64StartTime)}ms`);
+          
           setLoadingState('GENERATING_IMAGE');
     
+          console.log(`[Timing] Sending image generation request to Gemini API...`);
+          const apiStartTime = performance.now();
+          
           const response = await fetch('/api/gemini-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -332,6 +390,9 @@
               images: base64Images
             })
           });
+
+          const apiEndTime = performance.now();
+          console.log(`[Timing] Gemini API response received in ${Math.round(apiEndTime - apiStartTime)}ms`);
 
           if (!response.ok) {
             const errorData = await response.json();
@@ -343,11 +404,16 @@
           if (result.success) {
             setGeneratedImage(result.image);
             setCurrentStep(4);
+            const endTime = performance.now();
+            console.log(`[Timing] Image generation completed in ${Math.round(endTime - startTime)}ms`);
+            console.log(`[Timing] Breakdown: Base64 conversion: ${Math.round(base64EndTime - base64StartTime)}ms, API call: ${Math.round(apiEndTime - apiStartTime)}ms`);
           } else {
             throw new Error(result.error || 'Failed to generate image');
           }
     
         } catch (e) {
+            const endTime = performance.now();
+            console.error(`[Timing] Image generation failed after ${Math.round(endTime - startTime)}ms:`, e.message);
             setError(`An error occurred while generating the image: ${e.message}`);
         } finally {
           setLoadingState('IDLE');
