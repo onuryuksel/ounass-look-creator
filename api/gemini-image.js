@@ -15,6 +15,11 @@ export default async function handler(req, res) {
   try {
     const { prompt, images } = req.body;
     
+    console.log('--- RECEIVED IMAGE GENERATION REQUEST ---');
+    console.log('PROMPT RECEIVED:', prompt);
+    console.log('IMAGE COUNT:', images?.length);
+    console.log('-----------------------------------------');
+    
     console.log('Image generation request received:', {
       promptLength: prompt?.length,
       imageCount: images?.length,
