@@ -79,6 +79,11 @@
           // 5 different proxy services in waterfall approach
           const proxyServices = [
             {
+              name: 'CORS.EU',
+              url: `https://cors.eu.org/https://www.ounass.ae/product/findbysku?sku=${sku}`,
+              parser: (data) => data
+            },
+            {
               name: 'AllOrigins',
               url: `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.ounass.ae/product/findbysku?sku=${sku}`)}`,
               parser: (data) => JSON.parse(data.contents)
@@ -86,11 +91,6 @@
             {
               name: 'CORS.SH',
               url: `https://proxy.cors.sh/https://www.ounass.ae/product/findbysku?sku=${sku}`,
-              parser: (data) => data
-            },
-            {
-              name: 'CORS.EU',
-              url: `https://cors.eu.org/https://www.ounass.ae/product/findbysku?sku=${sku}`,
               parser: (data) => data
             },
             {
@@ -771,9 +771,9 @@
                       <p className="text-sm text-gray-500">
                         {Object.keys(productImages).length} of {skus.filter(s => s).length} SKUs processed
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Using 5 proxy services for maximum reliability
-                      </p>
+                                              <p className="text-xs text-gray-400 mt-1">
+                          Loading product images...
+                        </p>
                       {Object.keys(productImages).length > 0 && (
                         <div className="mt-2">
                           <p className="text-xs text-green-600 font-medium">
