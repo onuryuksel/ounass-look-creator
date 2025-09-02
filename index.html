@@ -244,23 +244,31 @@
         }
       };
     
-      // Generates both prompts initially, now accepts the images object directly
-      const generatePrompts = async () => {
+      // Generates prompts. This is now the single source of truth for prompt creation.
+      const generatePrompts = async (isLifestyle = false) => {
         setLoadingState('GENERATING_PROMPTS');
+        setError(null);
         
         try {
+          // Dynamically build the product reference list based on user's SKU order
           const productDetails = productImages.map((p, i) => ({
-            ref: `Image ${i + 2}`, // +2 because of the decoy at index 0 and 1-based numbering
-            category: p.images.category
+            ref: `Image ${i + 1}`, // Use the direct index from the user's order
+            category: p.images.category || 'item' // Fallback category
           }));
-          
-          let studioPrompt = `A photorealistic full-body studio photograph of a model. The model is wearing the exact products from the provided reference images. It is critical that these products are not altered in any way. The outfit consists of: `;
-          const studioProductRefs = productDetails.map(p => `the ${p.category.toLowerCase()} from ${p.ref}`).join(', ');
-          studioPrompt += studioProductRefs + ".";
-          studioPrompt += " The model's pose is elegant and static. The lighting is bright and professional on a seamless light grey background.";
+          const productReferences = productDetails.map(p => `the ${p.category.toLowerCase()} from ${p.ref}`).join(', ');
 
-          setPrompts({ studio: studioPrompt, lifestyle: '' });
-          setCurrentStep(3);
+          let finalPrompt = '';
+          if (isLifestyle) {
+            // Construct the DYNAMIC lifestyle prompt
+            finalPrompt = `A photorealistic lifestyle photograph of a fashion model. The model is wearing the exact products from the provided reference images. It is critical that these products are not altered in any way. The outfit consists of: ${productReferences}. The scene is '${lifestyleInputs.location}' with a '${lifestyleInputs.mood}' mood. The lighting should reflect '${lifestyleInputs.time}'. The model is captured in a natural, candid pose. ${lifestyleInputs.extra || ''}`;
+            setPrompts(prev => ({ ...prev, lifestyle: finalPrompt }));
+            setShowLifestyleForm(false);
+          } else {
+            // Construct the DYNAMIC studio prompt
+            finalPrompt = `A photorealistic full-body studio photograph of a model. The model is wearing the exact products from the provided reference images. It is critical that these products are not altered in any way. The outfit consists of: ${productReferences}. The model's pose is elegant and static. The lighting is bright and professional on a seamless light grey background.`;
+            setPrompts({ studio: finalPrompt, lifestyle: '' });
+            setCurrentStep(3);
+          }
         } catch(e) {
             setError('Failed to construct prompts.');
             console.error(e);
@@ -269,29 +277,7 @@
         }
       };
       
-      // Generates the lifestyle prompt based on user inputs using Gemini API
-      const generateLifestylePrompt = async () => {
-        setLoadingState('GENERATING_PROMPTS');
-        try {
-          const productDetails = productImages.map((p, i) => ({
-            ref: `Image ${i + 2}`,
-            category: p.images.category
-          }));
-
-          let lifestylePrompt = `A photorealistic lifestyle photograph of a fashion model. The model is wearing the exact products from the provided reference images. It is critical that these products are not altered in any way. The outfit consists of: `;
-          const lifestyleProductRefs = productDetails.map(p => `the ${p.category.toLowerCase()} from ${p.ref}`).join(', ');
-          lifestylePrompt += lifestyleProductRefs + ".";
-          lifestylePrompt += ` The scene is '${lifestyleInputs.location}' with a '${lifestyleInputs.mood}' mood. The lighting should reflect '${lifestyleInputs.time}'. The model is captured in a natural, candid pose. ${lifestyleInputs.extra || ''}`;
-          
-          setPrompts(prev => ({ ...prev, lifestyle: lifestylePrompt }));
-          setShowLifestyleForm(false);
-        } catch(e) {
-            setError('Failed to construct lifestyle prompt.');
-            console.error(e);
-        } finally {
-          setLoadingState('IDLE');
-        }
-      };
+      // Removed generateLifestylePrompt as it's now merged into generatePrompts
     
       // Helper function to convert a URL to a Base64 string
       const urlToBase64 = async (url) => {
@@ -508,8 +494,8 @@
                 ))}
                 <div className="flex justify-end mt-4">
                   <button
-                    onClick={generatePrompts} // Reverted to call generatePrompts directly
-                    disabled={Object.keys(selectedImages).length !== Object.keys(productImages).length}
+                    onClick={() => generatePrompts(false)}
+                    disabled={Object.keys(selectedImages).length !== productImages.length}
                     className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     Generate Prompts
@@ -546,7 +532,7 @@
                         />
                         <span className="font-medium text-lg">Studio Shoot Prompt:</span>
                       </div>
-                      <button onClick={() => generatePrompts()} className="text-sm p-1 px-3 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
+                      <button onClick={() => generatePrompts(false)} className="text-sm p-1 px-3 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
                         Refresh
                       </button>
                     </label>
@@ -611,7 +597,7 @@
                           />
                         </div>
                         <button
-                          onClick={generateLifestylePrompt}
+                          onClick={() => generatePrompts(true)}
                           className="w-full p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
                         >
                           Generate Prompt
@@ -705,8 +691,8 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.5.0 */}
-              <p className="text-xs text-gray-300 mt-1">v1.5.0</p>
+              {/* Force refresh for v1.5.1 */}
+              <p className="text-xs text-gray-300 mt-1">v1.5.1</p>
             </div>
     
             {error && (
