@@ -372,10 +372,13 @@
           const base64EndTime = performance.now();
           console.log(`[Timing] Base64 conversion completed in ${Math.round(base64EndTime - base64StartTime)}ms`);
           
-          // Log the full prompt to the browser console
-          console.log('%c--- SENDING TO IMAGE GENERATION API ---', 'color: blue; font-weight: bold;');
-          console.log('%cPROMPT:', 'color: blue; font-weight: bold;', prompts[selectedPrompt]);
-          console.log('%c------------------------------------', 'color: blue; font-weight: bold;');
+          // --- CRITICAL DEBUG LOG ---
+          console.log('%c--- DATA SENT TO /api/gemini-image ---', 'color: purple; font-weight: bold; font-size: 14px;');
+          console.log('%cFinal Prompt:', 'color: purple; font-weight: bold;', prompts[selectedPrompt]);
+          console.log('%cImage URLs Sent:', 'color: purple; font-weight: bold;', selectedImageUrls);
+          console.log(`%cTotal Images: ${base64Images.length}`, 'color: purple; font-weight: bold;');
+          console.log('%c-------------------------------------------', 'color: purple; font-weight: bold; font-size: 14px;');
+          // --- END CRITICAL DEBUG LOG ---
           
           setLoadingState('GENERATING_IMAGE');
     
@@ -718,7 +721,7 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              <p className="text-xs text-gray-300 mt-1">v1.3.5</p>
+              <p className="text-xs text-gray-300 mt-1">v1.3.6</p>
             </div>
     
             {error && (
