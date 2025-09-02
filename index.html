@@ -189,6 +189,11 @@
             successCount++;
             // Update progress in real-time
             setProductImages(prev => ({ ...prev, [result.value.sku]: result.value.images }));
+            
+            // Clear error if we now have enough successful SKUs
+            if (successCount >= 2) {
+              setError(null);
+            }
           } else if (result.status === 'rejected' && result.reason) {
             hasErrors = true;
             if (!firstError) {
@@ -206,15 +211,18 @@
         setProductImages(images);
         setLoadingState('IDLE');
         
-        // Clear any previous errors if we have successful results
+        // Smart error handling: prioritize success over errors
         if (successCount >= 2) {
+          // We have enough successful SKUs, clear errors and proceed
           setError(null);
           setCurrentStep(2);
-        } else if (hasErrors && successCount === 0) {
-          // Only show error if no SKUs were successful
-          setError(`Failed to fetch images. Please try again.`);
-        } else if (successCount < 2) {
-          setError('At least two valid SKUs with images are required.');
+          console.log(`[Success] Proceeding to step 2 with ${successCount} successful SKUs`);
+        } else if (successCount > 0) {
+          // Some SKUs succeeded but not enough, show partial success message
+          setError(`Only ${successCount} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
+        } else {
+          // No SKUs succeeded, show error
+          setError(`Failed to fetch images from all proxy services. Please try again.`);
         }
       };
     
@@ -760,9 +768,16 @@
                         Using 5 proxy services for maximum reliability
                       </p>
                       {Object.keys(productImages).length > 0 && (
-                        <p className="text-xs text-green-600 mt-1 font-medium">
-                          ✓ Some images loaded successfully!
-                        </p>
+                        <div className="mt-2">
+                          <p className="text-xs text-green-600 font-medium">
+                            ✓ {Object.keys(productImages).length} SKU(s) loaded successfully!
+                          </p>
+                          {Object.keys(productImages).length >= 2 && (
+                            <p className="text-xs text-blue-600 font-medium">
+                              🚀 Ready to proceed to next step!
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
                   )}
