@@ -213,6 +213,9 @@
         const totalTime = Math.round(endTime - startTime);
         
         console.log(`[Completed] Total images for ${finalSuccessCount} SKUs successfully fetched in ${totalTime}ms.`);
+        console.log(`[Debug] Final images object:`, images);
+        console.log(`[Debug] Final success count: ${finalSuccessCount}`);
+        console.log(`[Debug] Product images state:`, Object.keys(productImages).length);
         
         // Final state update with accurate counts
         setProductImages(images);
@@ -227,9 +230,11 @@
         } else if (finalSuccessCount > 0) {
           // Some SKUs succeeded but not enough, show partial success message
           setError(`Only ${finalSuccessCount} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
+          console.log(`[Debug] Not enough SKUs: ${finalSuccessCount} < 2`);
         } else {
           // No SKUs succeeded, show error
           setError(`Failed to fetch images from all proxy services. Please try again.`);
+          console.log(`[Debug] No SKUs succeeded: ${finalSuccessCount} = 0`);
         }
       };
     
@@ -737,6 +742,7 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
+              <p className="text-xs text-gray-300 mt-1">v1.2.3</p>
             </div>
     
             {error && (
