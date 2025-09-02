@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/gemini-image.js": {
+      "maxDuration": 60
+    }
+  },
   "routes": [
     {
       "src": "/api/(.*)",
@@ -8,13 +13,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "functions": {
-    "api/gemini-prompt.js": {
-      "maxDuration": 30
-    },
-    "api/gemini-image.js": {
-      "maxDuration": 60
-    }
-  }
+  ]
 }
