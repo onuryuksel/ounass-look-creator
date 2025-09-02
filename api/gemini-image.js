@@ -48,15 +48,30 @@ export default async function handler(req, res) {
     
     console.log(`Using model: ${model}`);
     
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelaanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    // Add retry logic with exponential backoff for rate limiting
+    let response;
+    const retries = 3;
+    let delay = 1000;
 
-    console.log(`Model ${model} response status:`, response.status);
+    for (let i = 0; i < retries; i++) {
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.status === 429 && i < retries - 1) {
+        console.log(`Rate limit hit (429). Retrying in ${delay / 1000}s... (Attempt ${i + 1}/${retries})`);
+        await new Promise(res => setTimeout(res, delay));
+        delay *= 2; // Exponential backoff
+      } else {
+        break; // Break loop on success or non-retriable error
+      }
+    }
+
+    console.log(`Model ${model} final response status:`, response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
