@@ -231,9 +231,8 @@
         if (finalSuccessCount >= 2) {
           // We have enough successful SKUs, clear errors and proceed
           setError(null);
-          // setCurrentStep(2); // We now call generatePrompts which handles the step change
-          console.log(`[Success] Proceeding to generate prompts with ${finalSuccessCount} successful SKUs`);
-          generatePrompts(images); // Pass the fresh images object directly
+          setCurrentStep(2); // Go to step 2 for image selection
+          console.log(`[Success] Proceeding to step 2 with ${finalSuccessCount} successful SKUs`);
         } else if (finalSuccessCount > 0) {
           // Some SKUs succeeded but not enough, show partial success message
           setError(`Only ${finalSuccessCount} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
@@ -296,10 +295,11 @@
     
     
       // Generates both prompts initially, now accepts the images object directly
-      const generatePrompts = async (imageObj) => {
+      const generatePrompts = async () => {
+        // No longer accepts imageObj, uses state as it should be correctly set by this point
         setLoadingState('GENERATING_PROMPTS');
         
-        const productDetails = Object.values(imageObj).map(item => ({
+        const productDetails = Object.values(productImages).map(item => ({
           brand: item.brand,
           name: item.name,
           category: item.category
@@ -524,7 +524,7 @@
                 ))}
                 <div className="flex justify-end mt-4">
                   <button
-                    onClick={() => generatePrompts(productImages)}
+                    onClick={generatePrompts} // Reverted to call generatePrompts directly
                     disabled={Object.keys(selectedImages).length !== Object.keys(productImages).length}
                     className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
@@ -721,7 +721,7 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              <p className="text-xs text-gray-300 mt-1">v1.3.7</p>
+              <p className="text-xs text-gray-300 mt-1">v1.3.8</p>
             </div>
     
             {error && (
