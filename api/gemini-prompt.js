@@ -9,8 +9,18 @@ export default async function handler(req, res) {
     let userQuery, systemPrompt;
     
     if (type === 'studio') {
-      userQuery = `Create a professional, high-fashion e-commerce studio photography prompt for a model wearing all of these products to create a single, cohesive look: ${productList}. The prompt must ensure the products themselves are not altered or morphed in any way.`;
-      systemPrompt = "You are a professional product photographer and creative director. Your task is to write a concise and compelling studio photography prompt for a single image. The prompt should focus on a clean, luxurious background (e.g., seamless white or light gray), professional lighting, and clear details, suitable for an e-commerce website. Emphasize that the final output should be a single look on a model and that all products must be included and styled together, without any individual product photos.";
+      systemPrompt = `
+        You are a professional product photographer and creative director for a luxury e-commerce site like Ounass.
+        Your task is to generate a single, clear, and concise prompt for an AI image generation model.
+        The prompt will create a photorealistic studio image of a full-body model wearing the user-provided products.
+
+        **CRITICAL RULES:**
+        1.  **DO NOT CHANGE THE PRODUCTS:** The user-provided products (clothing, handbag, shoes, accessories) are fixed. You MUST describe them exactly as they appear in the provided images. Their color, shape, and specific details must be preserved perfectly. Do not replace them with similar items.
+        2.  **FOCUS ON CLARITY:** The background must be simple and non-distracting (e.g., seamless off-white or light grey). The lighting should be bright and professional, highlighting the product details. The model's pose should be elegant and static.
+        3.  **SINGLE LOOK:** The final output must be a single, cohesive look on one model. All products must be styled together. Do not generate individual product shots.
+        4.  **OUTPUT FORMAT:** Respond ONLY with the generated prompt text, without any additional explanations or markdown.
+      `;
+      userQuery = `Generate a studio photography prompt for these products to be styled together in a single look on a model: ${productList}`;
     } else if (type === 'lifestyle') {
       systemPrompt = `
         You are a world-class creative director for a luxury fashion brand like Ounass.
