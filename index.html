@@ -178,6 +178,7 @@
         let images = {};
         let firstError = null;
         let successCount = 0;
+        let hasErrors = false;
     
         // Process results as they complete (faster feedback)
         const results = await Promise.allSettled(fetchPromises);
@@ -188,8 +189,11 @@
             successCount++;
             // Update progress in real-time
             setProductImages(prev => ({ ...prev, [result.value.sku]: result.value.images }));
-          } else if (result.status === 'rejected' && result.reason && !firstError) {
-            firstError = result.reason;
+          } else if (result.status === 'rejected' && result.reason) {
+            hasErrors = true;
+            if (!firstError) {
+              firstError = result.reason;
+            }
           }
         });
     
@@ -198,14 +202,18 @@
         
         console.log(`[Completed] Total images for ${successCount} SKUs successfully fetched in ${totalTime}ms.`);
         
+        // Final state update
         setProductImages(images);
         setLoadingState('IDLE');
-    
-        if (firstError) {
-          setError(`An error occurred: ${firstError}`);
-        } else if (successCount >= 2) {
+        
+        // Clear any previous errors if we have successful results
+        if (successCount >= 2) {
+          setError(null);
           setCurrentStep(2);
-        } else {
+        } else if (hasErrors && successCount === 0) {
+          // Only show error if no SKUs were successful
+          setError(`Failed to fetch images. Please try again.`);
+        } else if (successCount < 2) {
           setError('At least two valid SKUs with images are required.');
         }
       };
@@ -719,6 +727,12 @@
             {error && (
               <div className="p-4 mb-6 text-sm text-red-700 bg-red-100 rounded-lg text-center font-medium">
                 {error}
+                <button 
+                  onClick={() => setError(null)}
+                  className="ml-2 text-red-500 hover:text-red-700 font-bold"
+                >
+                  ×
+                </button>
               </div>
             )}
     
@@ -745,6 +759,11 @@
                       <p className="text-xs text-gray-400 mt-1">
                         Using 5 proxy services for maximum reliability
                       </p>
+                      {Object.keys(productImages).length > 0 && (
+                        <p className="text-xs text-green-600 mt-1 font-medium">
+                          ✓ Some images loaded successfully!
+                        </p>
+                      )}
                     </div>
                   )}
                   
