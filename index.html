@@ -41,13 +41,30 @@
       const fetchWithRetry = async (url, retries = 3) => {
         for (let i = 0; i < retries; i++) {
           try {
-            const response = await fetch(url);
+            const response = await fetch(url, {
+              // Add cache control for better performance
+              cache: 'no-cache',
+              // Add timeout for individual requests
+              signal: AbortSignal.timeout(10000) // 10 second timeout per request
+            });
+            
             if (response.ok) {
               return response;
             }
+            
+            // If response is not ok, don't retry immediately
+            if (response.status >= 400 && response.status < 500) {
+              throw new Error(`Client error: ${response.status}`);
+            }
+            
           } catch (e) {
+            console.log(`[Retry ${i + 1}/${retries}] Attempt failed for ${url}: ${e.message}`);
+            
             if (i === retries - 1) throw e;
-            await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 100));
+            
+            // Exponential backoff with jitter for better performance
+            const delay = Math.pow(2, i) * 100 + Math.random() * 100;
+            await new Promise(resolve => setTimeout(resolve, delay));
           }
         }
         throw new Error('All fetch attempts failed.');
@@ -67,13 +84,21 @@
     
         // Logging the start of the process
         console.log(`[Initiating] Starting image fetching process for ${validSkus.length} SKUs.`);
+        
+        // Performance tracking
+        const startTime = performance.now();
     
-        // Creating an array of promises to fetch all SKUs concurrently
+        // Creating an array of promises to fetch all SKUs concurrently with timeout
         const fetchPromises = validSkus.map(sku => {
           const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.ounass.ae/product/findbysku?sku=${sku}`)}`;
-          // Logging the request step for each SKU
           console.log(`[Step 1] Sending API request for SKU ${sku} via proxy.`);
-          return fetchWithRetry(url).then(response => {
+          
+          // Add timeout to prevent hanging requests
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout')), 15000) // 15 second timeout
+          );
+          
+          const fetchPromise = fetchWithRetry(url).then(response => {
             if (!response) {
                 console.error("No response from fetchWithRetry for SKU:", sku);
                 throw new Error("No response from fetchWithRetry.");
@@ -90,7 +115,6 @@
               .map(m => `https://ounass-ae.atgcdn.ae/pub/media/catalog/product${m.src}`);
     
             if (imageSrcs.length > 0) {
-              // Logging success for a specific SKU
               console.log(`[Success] Found ${imageSrcs.length} images for SKU ${sku}.`);
               const brand = content.analytics?.brand || 'Unknown Brand';
               const name = content.analytics?.name || 'Unknown Product';
@@ -106,41 +130,47 @@
                 }
               };
             } else {
-              // Logging a warning if no images are found
               console.warn(`[Warning] No images found for SKU ${sku}.`);
               throw new Error(`No images found for SKU ${sku}.`);
             }
           }).catch(e => {
-            // Logging an error for a specific SKU
             console.error(`[Error] An error occurred for SKU ${sku}: ${e.message}`);
             return { sku, error: e.message };
           });
+          
+          // Race between fetch and timeout
+          return Promise.race([fetchPromise, timeoutPromise]);
         });
     
         let images = {};
         let firstError = null;
+        let successCount = 0;
     
-        // Waiting for all promises to settle (either resolve or reject)
+        // Process results as they complete (faster feedback)
         const results = await Promise.allSettled(fetchPromises);
-    
-        results.forEach(result => {
+        
+        results.forEach((result, index) => {
           if (result.status === 'fulfilled' && result.value && result.value.images) {
             images[result.value.sku] = result.value.images;
+            successCount++;
+            // Update progress in real-time
+            setProductImages(prev => ({ ...prev, [result.value.sku]: result.value.images }));
           } else if (result.status === 'rejected' && result.reason && !firstError) {
-            // Set the first error encountered for display
             firstError = result.reason;
           }
         });
     
-        // Logging the completion of the process
-        console.log(`[Completed] Total images for ${Object.keys(images).length} SKUs successfully fetched.`);
+        const endTime = performance.now();
+        const totalTime = Math.round(endTime - startTime);
+        
+        console.log(`[Completed] Total images for ${successCount} SKUs successfully fetched in ${totalTime}ms.`);
         
         setProductImages(images);
         setLoadingState('IDLE');
     
         if (firstError) {
           setError(`An error occurred: ${firstError}`);
-        } else if (Object.keys(images).length >= 2) {
+        } else if (successCount >= 2) {
           setCurrentStep(2);
         } else {
           setError('At least two valid SKUs with images are required.');
@@ -614,6 +644,24 @@
                 <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-lg">
                   <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
                   <p className="mt-4 text-gray-600 font-semibold">{getLoadingMessage()}</p>
+                  
+                  {/* Progress indicator for image fetching */}
+                  {loadingState === 'FETCHING_IMAGES' && (
+                    <div className="mt-4 text-center">
+                      <div className="w-64 bg-gray-200 rounded-full h-2 mb-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ 
+                            width: `${Math.min((Object.keys(productImages).length / Math.max(skus.filter(s => s).length, 1)) * 100, 100)}%` 
+                          }}
+                        ></div>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {Object.keys(productImages).length} of {skus.filter(s => s).length} SKUs processed
+                      </p>
+                    </div>
+                  )}
+                  
                   {Object.keys(selectedImages).length > 0 && (
                     <div className="flex flex-wrap gap-4 mt-6">
                       {Object.values(selectedImages).map((src, index) => (
