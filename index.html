@@ -271,11 +271,27 @@
             const creativeDescription = result.prompt;
             let finalPrompt = '';
 
+            // --- NEW: Sanitize the creative description to remove any product names ---
+            const productDetails = Object.values(productImages).map(item => ({
+              brand: item.brand,
+              name: item.name,
+              category: item.category
+            }));
+            const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
+            const productNames = productDetails.map(p => [p.brand, p.name]).flat();
+            let sanitizedCreativeDescription = creativeDescription;
+            productNames.forEach(name => {
+              // Use a regex to remove the name, case-insensitive
+              const regex = new RegExp(name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+              sanitizedCreativeDescription = sanitizedCreativeDescription.replace(regex, '');
+            });
+            // --- END SANITIZE ---
+
             // Manually construct the final prompt to ensure rules are always included
             if (type === 'studio') {
-              finalPrompt = `A photorealistic full-body studio photograph of a model wearing the following exact products. It is critical these products are not altered in any way: ${productList}. ${creativeDescription}`;
+              finalPrompt = `A photorealistic full-body studio photograph of a model wearing the following exact products. It is critical these products are not altered in any way: ${productList}. ${sanitizedCreativeDescription}`;
             } else {
-              finalPrompt = `A photorealistic lifestyle photograph of a fashion model wearing the following exact products. It is critical these products are not altered in any way: ${productList}. The scene is '${lifestyleData.location}' with a '${lifestyleData.mood}' mood. ${creativeDescription}`;
+              finalPrompt = `A photorealistic lifestyle photograph of a fashion model wearing the following exact products. It is critical these products are not altered in any way: ${productList}. The scene is '${lifestyleData.location}' with a '${lifestyleData.mood}' mood. ${sanitizedCreativeDescription}`;
             }
             
             setPrompts(prev => ({ ...prev, [type]: finalPrompt }));
@@ -367,8 +383,17 @@
           const base64StartTime = performance.now();
           
           const selectedImageUrls = Object.values(selectedImages);
-          const base64Images = await Promise.all(selectedImageUrls.map(urlToBase64));
           
+          // --- DECOY IMAGE TECHNIQUE ---
+          // Add a neutral "decoy" image as the first item to address the "first image ignored" hypothesis.
+          // This is a base64 for a simple 10x10 grey square.
+          const decoyImageBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAQAAAAnOwcBAAAAF0lEQVR42mN8/5+BgYGBgYGBgYGBgYkDAOFaC/UBsyDNAAAAAElFTkSuQmCC";
+          const base64Images = await Promise.all([
+              Promise.resolve(decoyImageBase64), // The decoy is already base64
+              ...selectedImageUrls.map(urlToBase64)
+          ]);
+          // --- END DECOY IMAGE TECHNIQUE ---
+
           const base64EndTime = performance.now();
           console.log(`[Timing] Base64 conversion completed in ${Math.round(base64EndTime - base64StartTime)}ms`);
           
@@ -729,7 +754,7 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              <p className="text-xs text-gray-300 mt-1">v1.4.1</p>
+              <p className="text-xs text-gray-300 mt-1">v1.4.2</p>
             </div>
     
             {error && (
