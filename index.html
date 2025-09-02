@@ -244,98 +244,53 @@
         }
       };
     
-      // Generates a single prompt based on a type
-      const refreshPrompt = async (type, productList, lifestyleData = null) => {
+      // Generates both prompts initially, now accepts the images object directly
+      const generatePrompts = async () => {
         setLoadingState('GENERATING_PROMPTS');
-        setError(null);
         
-        const startTime = performance.now();
-        console.log(`[Timing] Starting ${type} prompt generation...`);
-    
         try {
-          const payload = { type, productList };
-          if (type === 'lifestyle' && lifestyleData) {
-            payload.lifestyleInputs = lifestyleData;
-          }
-
-          const response = await fetch('/api/gemini-prompt', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          if (!response.ok) throw new Error('API request failed');
-          const result = await response.json();
+          const productDetails = productImages.map((p, i) => ({
+            ref: `Image ${i + 2}`, // +2 because of the decoy at index 0 and 1-based numbering
+            category: p.images.category
+          }));
           
-          if (result.success) {
-            const creativeDescription = result.prompt;
-            let finalPrompt = '';
+          let studioPrompt = `A photorealistic full-body studio photograph of a model. The model is wearing the exact products from the provided reference images. It is critical that these products are not altered in any way. The outfit consists of: `;
+          const studioProductRefs = productDetails.map(p => `the ${p.category.toLowerCase()} from ${p.ref}`).join(', ');
+          studioPrompt += studioProductRefs + ".";
+          studioPrompt += " The model's pose is elegant and static. The lighting is bright and professional on a seamless light grey background.";
 
-            // --- FIX: Sanitize the creative description to remove any product names ---
-            const productDetails = Object.values(productImages).map(item => ({
-              brand: item.brand,
-              name: item.name,
-              category: item.category
-            }));
-            const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
-            
-            // --- FIX: Sanitize the creative description to remove any product names ---
-            const productNames = productDetails.map(p => [p.brand, p.name]).flat().filter(Boolean);
-            let sanitizedCreativeDescription = creativeDescription;
-            productNames.forEach(name => {
-              if (name.trim() === '') return;
-              const regex = new RegExp(name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
-              sanitizedCreativeDescription = sanitizedCreativeDescription.replace(regex, '');
-            });
-            // --- END FIX ---
-
-            // Manually construct the final prompt to ensure rules are always included
-            if (type === 'studio') {
-              finalPrompt = `A photorealistic full-body studio photograph of a model wearing the exact products provided in the reference images. It is critical these products are not altered in any way. The products to be combined are: ${productList}. ${sanitizedCreativeDescription}`;
-            } else {
-              finalPrompt = `A photorealistic lifestyle photograph of a fashion model wearing the following exact products. It is critical these products are not altered in any way: ${productList}. The scene is '${lifestyleData.location}' with a '${lifestyleData.mood}' mood. ${sanitizedCreativeDescription}`;
-            }
-            
-            setPrompts(prev => ({ ...prev, [type]: finalPrompt }));
-
-            if (type === 'lifestyle') {
-              setShowLifestyleForm(false);
-            }
-          } else {
-            throw new Error(result.error || `Failed to generate ${type} prompt`);
-          }
-        } catch (e) {
-          setError(`An error occurred while generating the prompt: ${e.message}`);
+          setPrompts({ studio: studioPrompt, lifestyle: '' });
+          setCurrentStep(3);
+        } catch(e) {
+            setError('Failed to construct prompts.');
+            console.error(e);
         } finally {
           setLoadingState('IDLE');
         }
       };
-    
-    
-      // Generates both prompts initially, now accepts the images object directly
-      const generatePrompts = async () => {
-        // No longer accepts imageObj, uses state as it should be correctly set by this point
-        setLoadingState('GENERATING_PROMPTS');
-        
-        const productDetails = Object.values(productImages).map(item => ({
-          brand: item.brand,
-          name: item.name,
-          category: item.category
-        }));
-        const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
-
-        await refreshPrompt('studio', productList);
-        // Reset lifestyle prompt, don't generate it yet
-        setPrompts(prev => ({ ...prev, lifestyle: '' }));
-        
-        setCurrentStep(3);
-        setLoadingState('IDLE');
-      };
       
       // Generates the lifestyle prompt based on user inputs using Gemini API
       const generateLifestylePrompt = async () => {
-        // This function now calls the generic refreshPrompt
-        await refreshPrompt('lifestyle', null, lifestyleInputs);
+        setLoadingState('GENERATING_PROMPTS');
+        try {
+          const productDetails = productImages.map((p, i) => ({
+            ref: `Image ${i + 2}`,
+            category: p.images.category
+          }));
+
+          let lifestylePrompt = `A photorealistic lifestyle photograph of a fashion model. The model is wearing the exact products from the provided reference images. It is critical that these products are not altered in any way. The outfit consists of: `;
+          const lifestyleProductRefs = productDetails.map(p => `the ${p.category.toLowerCase()} from ${p.ref}`).join(', ');
+          lifestylePrompt += lifestyleProductRefs + ".";
+          lifestylePrompt += ` The scene is '${lifestyleInputs.location}' with a '${lifestyleInputs.mood}' mood. The lighting should reflect '${lifestyleInputs.time}'. The model is captured in a natural, candid pose. ${lifestyleInputs.extra || ''}`;
+          
+          setPrompts(prev => ({ ...prev, lifestyle: lifestylePrompt }));
+          setShowLifestyleForm(false);
+        } catch(e) {
+            setError('Failed to construct lifestyle prompt.');
+            console.error(e);
+        } finally {
+          setLoadingState('IDLE');
+        }
       };
     
       // Helper function to convert a URL to a Base64 string
@@ -591,7 +546,7 @@
                         />
                         <span className="font-medium text-lg">Studio Shoot Prompt:</span>
                       </div>
-                      <button onClick={() => refreshPrompt('studio')} className="text-sm p-1 px-3 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
+                      <button onClick={() => generatePrompts()} className="text-sm p-1 px-3 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
                         Refresh
                       </button>
                     </label>
@@ -750,8 +705,8 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.4.6 */}
-              <p className="text-xs text-gray-300 mt-1">v1.4.6</p>
+              {/* Force refresh for v1.5.0 */}
+              <p className="text-xs text-gray-300 mt-1">v1.5.0</p>
             </div>
     
             {error && (
