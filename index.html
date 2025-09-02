@@ -90,15 +90,43 @@
     
         // Creating an array of promises to fetch all SKUs concurrently with timeout
         const fetchPromises = validSkus.map(sku => {
-          const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.ounass.ae/product/findbysku?sku=${sku}`)}`;
-          console.log(`[Step 1] Sending API request for SKU ${sku} via proxy.`);
+          // Try multiple proxy services for better reliability and speed
+          const proxyUrls = [
+            `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.ounass.ae/product/findbysku?sku=${sku}`)}`,
+            `https://cors-anywhere.herokuapp.com/https://www.ounass.ae/product/findbysku?sku=${sku}`,
+            `https://thingproxy.freeboard.io/fetch/https://www.ounass.ae/product/findbysku?sku=${sku}`
+          ];
+          
+          console.log(`[Step 1] Sending API request for SKU ${sku} via multiple proxies.`);
           
           // Add timeout to prevent hanging requests
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), 15000) // 15 second timeout
+            setTimeout(() => reject(new Error('Request timeout')), 8000) // Reduced to 8 seconds
           );
           
-          const fetchPromise = fetchWithRetry(url).then(response => {
+          // Try proxies in sequence until one works
+          const tryProxies = async () => {
+            for (let i = 0; i < proxyUrls.length; i++) {
+              try {
+                console.log(`[Step 1.${i + 1}] Trying proxy ${i + 1} for SKU ${sku}`);
+                const response = await fetch(proxyUrls[i], {
+                  cache: 'no-cache',
+                  signal: AbortSignal.timeout(8000)
+                });
+                
+                if (response.ok) {
+                  console.log(`[Success] Proxy ${i + 1} worked for SKU ${sku}`);
+                  return response;
+                }
+              } catch (e) {
+                console.log(`[Warning] Proxy ${i + 1} failed for SKU ${sku}: ${e.message}`);
+                if (i === proxyUrls.length - 1) throw e;
+              }
+            }
+            throw new Error('All proxies failed');
+          };
+          
+          const fetchPromise = tryProxies().then(response => {
             if (!response) {
                 console.error("No response from fetchWithRetry for SKU:", sku);
                 throw new Error("No response from fetchWithRetry.");
@@ -658,6 +686,9 @@
                       </div>
                       <p className="text-sm text-gray-500">
                         {Object.keys(productImages).length} of {skus.filter(s => s).length} SKUs processed
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Using multiple proxy services for faster loading
                       </p>
                     </div>
                   )}
