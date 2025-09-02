@@ -202,8 +202,16 @@
         
         console.log(`[Completed] Total images for ${sortedImages.length} SKUs successfully fetched in ${totalTime}ms.`);
         
+        // Convert array back to object format for compatibility with existing renderStep code
+        const productImagesObject = {};
+        sortedImages.forEach(item => {
+          if (item && item.sku) {
+            productImagesObject[item.sku] = item.images;
+          }
+        });
+        
         // Final state update with the correctly sorted array
-        setProductImages(sortedImages);
+        setProductImages(productImagesObject);
         setLoadingState('IDLE');
         
         // Smart error handling: prioritize success over errors
@@ -230,9 +238,9 @@
         
         try {
           // Dynamically build the product reference list based on user's SKU order
-          const productDetails = productImages.map((p, i) => ({
+          const productDetails = Object.values(productImages).map((p, i) => ({
             ref: `Image ${i + 1}`, // Use the direct index from the user's order
-            category: p.images.category || 'item' // Fallback category
+            category: p.category || 'item' // Fallback category
           }));
           const productReferences = productDetails.map(p => `the ${p.category.toLowerCase()} from ${p.ref}`).join(', ');
 
@@ -474,7 +482,7 @@
                 <div className="flex justify-end mt-4">
                   <button
                     onClick={() => generatePrompts(false)}
-                    disabled={Object.keys(selectedImages).length !== productImages.length}
+                    disabled={Object.keys(selectedImages).length !== Object.keys(productImages).length}
                     className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     Generate Prompts
@@ -670,8 +678,8 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.5.8 */}
-              <p className="text-xs text-gray-300 mt-1">v1.5.8</p>
+              {/* Force refresh for v1.5.9 */}
+              <p className="text-xs text-gray-300 mt-1">v1.5.9</p>
             </div>
     
             {error && (
