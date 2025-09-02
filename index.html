@@ -56,7 +56,7 @@
         }
       };
     
-      // Fetches images for a given SKU from the Ounass API using a proxy to bypass CORS
+      // Fetches images for a given SKU from the Ounass API using a single, reliable proxy
       const fetchImages = async () => {
         setError(null);
         setLoadingState('FETCHING_IMAGES');
@@ -68,85 +68,29 @@
           return;
         }
     
-        // Logging the start of the process
-        console.log(`[Initiating] Starting image fetching process for ${validSkus.length} SKUs.`);
+        console.log(`[Initiating] Starting image fetching process for ${validSkus.length} SKUs via AllOrigins proxy.`);
         
-        // Performance tracking
         const startTime = performance.now();
     
-        // Creating an array of promises to fetch all SKUs concurrently with timeout
-        const fetchPromises = validSkus.map(sku => {
-          // 5 different proxy services in waterfall approach
-          const proxyServices = [
-            {
-              name: 'CORS.EU',
-              url: `https://cors.eu.org/https://www.ounass.ae/product/findbysku?sku=${sku}`,
-              parser: (data) => data
-            },
-            {
-              name: 'AllOrigins',
-              url: `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.ounass.ae/product/findbysku?sku=${sku}`)}`,
-              parser: (data) => JSON.parse(data.contents)
-            },
-            {
-              name: 'CORS.SH',
-              url: `https://proxy.cors.sh/https://www.ounass.ae/product/findbysku?sku=${sku}`,
-              parser: (data) => data
-            },
-            {
-              name: 'ThingProxy',
-              url: `https://thingproxy.freeboard.io/fetch/https://www.ounass.ae/product/findbysku?sku=${sku}`,
-              parser: (data) => data
-            },
-            {
-              name: 'Direct API',
-              url: `https://www.ounass.ae/product/findbysku?sku=${sku}`,
-              parser: (data) => data
+        const fetchPromises = validSkus.map(async (sku) => {
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.ounass.ae/product/findbysku?sku=${sku}`)}`;
+          
+          try {
+            const response = await fetch(proxyUrl, {
+              signal: AbortSignal.timeout(15000) // Increased timeout to 15s for reliability
+            });
+
+            if (!response.ok) {
+              throw new Error(`Proxy request failed with status ${response.status}`);
             }
-          ];
-          
-          console.log(`[Step 1] Sending API request for SKU ${sku} via 5 proxy services.`);
-          
-          // Add timeout to prevent hanging requests
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), 10000) // 10 seconds per proxy
-          );
-          
-          // Waterfall approach: try each proxy until one works
-          const tryProxies = async () => {
-            for (let i = 0; i < proxyServices.length; i++) {
-              const proxy = proxyServices[i];
-              try {
-                console.log(`[Step 1.${i + 1}] Trying ${proxy.name} for SKU ${sku}`);
-                
-                const response = await fetch(proxy.url, {
-                  cache: 'no-cache',
-                  signal: AbortSignal.timeout(10000)
-                });
-                
-                if (response.ok) {
-                  const data = await response.json();
-                  console.log(`[Success] ${proxy.name} worked for SKU ${sku}`);
-                  
-                  // Parse data based on proxy type
-                  const parsedData = proxy.parser(data);
-                  return { response, data: parsedData };
-                }
-              } catch (e) {
-                console.log(`[Warning] ${proxy.name} failed for SKU ${sku}: ${e.message}`);
-                if (i === proxyServices.length - 1) throw e;
-              }
-            }
-            throw new Error('All proxy services failed');
-          };
-          
-          const fetchPromise = tryProxies().then(({ response, data }) => {
-            // Data is already parsed by the proxy parser
-            const content = data;
+
+            const data = await response.json();
+            const content = JSON.parse(data.contents);
+            
             const imageSrcs = content.media
               .filter(m => m.mediaType === 'image')
               .map(m => `https://ounass-ae.atgcdn.ae/pub/media/catalog/product${m.src}`);
-    
+
             if (imageSrcs.length > 0) {
               console.log(`[Success] Found ${imageSrcs.length} images for SKU ${sku}.`);
               const brand = content.analytics?.brand || 'Unknown Brand';
@@ -163,63 +107,46 @@
                 }
               };
             } else {
-              console.warn(`[Warning] No images found for SKU ${sku}.`);
               throw new Error(`No images found for SKU ${sku}.`);
             }
-          }).catch(e => {
-            console.error(`[Error] An error occurred for SKU ${sku}: ${e.message}`);
-            return { sku, error: e.message };
-          });
-          
-          // Race between fetch and timeout
-          return Promise.race([fetchPromise, timeoutPromise]);
+          } catch (e) {
+            console.error(`[Error] Failed to fetch SKU ${sku}: ${e.message}`);
+            return { sku, error: e.message }; // Return error object for Promise.allSettled
+          }
         });
     
         const results = await Promise.allSettled(fetchPromises);
-        let successfulResults = [];
-        let firstError = null;
-        let finalHasErrors = false;
         
-        results.forEach((result, index) => {
-          if (result.status === 'fulfilled' && result.value && result.value.images && result.value.images.srcs && result.value.images.srcs.length > 0) {
-            successfulResults.push({ sku: result.value.sku, images: result.value.images });
-          } else if (result.status === 'rejected' || (result.value && result.value.error)) {
-            finalHasErrors = true;
+        const successfulResults = [];
+        let firstError = null;
+
+        results.forEach(result => {
+          if (result.status === 'fulfilled' && !result.value.error) {
+            successfulResults.push(result.value);
+          } else {
+            const errorReason = result.reason || (result.value && result.value.error);
             if (!firstError) {
-              firstError = result.reason || (result.value && result.value.error);
+              firstError = errorReason;
             }
           }
         });
 
-        // --- NEW: Re-sort the results based on the original user input order ---
+        // Re-sort the results based on the original user input order
         const sortedImages = validSkus.map(sku => {
           return successfulResults.find(result => result.sku === sku);
-        }).filter(Boolean); // Filter out any undefined entries if a SKU failed
-        // --- END RE-SORT ---
+        }).filter(Boolean);
 
         const endTime = performance.now();
-        const totalTime = Math.round(endTime - startTime);
+        console.log(`[Completed] Total images for ${sortedImages.length} SKUs successfully fetched in ${Math.round(endTime - startTime)}ms.`);
         
-        console.log(`[Completed] Total images for ${sortedImages.length} SKUs successfully fetched in ${totalTime}ms.`);
-        
-        // Final state update with the correctly sorted array
         setProductImages(sortedImages);
         setLoadingState('IDLE');
         
-        // Smart error handling: prioritize success over errors
         if (sortedImages.length >= 2) {
-          // We have enough successful SKUs, clear errors and proceed
           setError(null);
-          setCurrentStep(2); // Go to step 2 for image selection
-          console.log(`[Success] Proceeding to step 2 with ${sortedImages.length} successful SKUs`);
-        } else if (sortedImages.length > 0) {
-          // Some SKUs succeeded but not enough, show partial success message
-          setError(`Only ${sortedImages.length} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
-          console.log(`[Debug] Not enough SKUs: ${sortedImages.length} < 2`);
+          setCurrentStep(2);
         } else {
-          // No SKUs succeeded, show error
-          setError(`Failed to fetch images from all proxy services. Please try again.`);
-          console.log(`[Debug] No SKUs succeeded: ${sortedImages.length} = 0`);
+          setError(`Failed to fetch enough product images. Please try again. First error: ${firstError}`);
         }
       };
     
@@ -670,8 +597,8 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.5.6 */}
-              <p className="text-xs text-gray-300 mt-1">v1.5.6</p>
+              {/* Force refresh for v1.5.7 */}
+              <p className="text-xs text-gray-300 mt-1">v1.5.7</p>
             </div>
     
             {error && (
