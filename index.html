@@ -231,8 +231,9 @@
         if (finalSuccessCount >= 2) {
           // We have enough successful SKUs, clear errors and proceed
           setError(null);
-          setCurrentStep(2);
-          console.log(`[Success] Proceeding to step 2 with ${finalSuccessCount} successful SKUs`);
+          // setCurrentStep(2); // We now call generatePrompts which handles the step change
+          console.log(`[Success] Proceeding to generate prompts with ${finalSuccessCount} successful SKUs`);
+          generatePrompts(images); // Pass the fresh images object directly
         } else if (finalSuccessCount > 0) {
           // Some SKUs succeeded but not enough, show partial success message
           setError(`Only ${finalSuccessCount} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
@@ -245,7 +246,8 @@
       };
     
       // Generates a single prompt based on a type
-      const refreshPrompt = async (type) => {
+      const refreshPrompt = async (type, productList, lifestyleData = null) => {
+        // This function is now more generic and receives the data it needs
         setLoadingState('GENERATING_PROMPTS');
         setError(null);
         
@@ -253,37 +255,34 @@
         const startTime = performance.now();
         console.log(`[Timing] Starting ${type} prompt generation...`);
     
-        const productDetails = Object.values(productImages).map(item => ({
-          brand: item.brand,
-          name: item.name,
-          category: item.category
-        }));
-        const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
-    
         try {
-          if (type === 'studio') {
-            console.log(`[Timing] Sending studio prompt request to Gemini API...`);
-            const apiStartTime = performance.now();
-            
-            const response = await fetch('/api/gemini-prompt', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ type: 'studio', productList })
-            });
+          const payload = { type, productList };
+          if (type === 'lifestyle' && lifestyleData) {
+            payload.lifestyleInputs = lifestyleData;
+          }
 
-            const apiEndTime = performance.now();
-            console.log(`[Timing] Gemini API response received in ${Math.round(apiEndTime - apiStartTime)}ms`);
+          console.log(`[Timing] Sending ${type} prompt request to Gemini API...`);
+          const apiStartTime = performance.now();
+          
+          const response = await fetch('/api/gemini-prompt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
 
-            if (!response.ok) throw new Error('API request failed');
-            const result = await response.json();
-            
-            if (result.success) {
-              setPrompts(prev => ({ ...prev, studio: result.prompt }));
-              const endTime = performance.now();
-              console.log(`[Timing] Studio prompt generation completed in ${Math.round(endTime - startTime)}ms`);
-            } else {
-              throw new Error(result.error || 'Failed to generate prompt');
-            }
+          const apiEndTime = performance.now();
+          console.log(`[Timing] Gemini API response received in ${Math.round(apiEndTime - apiStartTime)}ms`);
+
+          if (!response.ok) throw new Error('API request failed');
+          const result = await response.json();
+          
+          if (result.success) {
+            setPrompts(prev => ({ ...prev, studio: result.prompt }));
+            const endTime = performance.now();
+            console.log(`[Timing] Studio prompt generation completed in ${Math.round(endTime - startTime)}ms`);
+          } else {
+            throw new Error(result.error || 'Failed to generate prompt');
+          }
     
           } else if (type === 'lifestyle') {
             // Lifestyle prompt'u başlangıçta boş bırak, sadece kullanıcı generate butonuna tıkladığında oluştur
@@ -301,11 +300,21 @@
       };
     
     
-      // Generates both prompts initially
-      const generatePrompts = async () => {
+      // Generates both prompts initially, now accepts the images object directly
+      const generatePrompts = async (imageObj) => {
         setLoadingState('GENERATING_PROMPTS');
-        await refreshPrompt('studio');
-        await refreshPrompt('lifestyle'); // Keep this for initial prompt generation
+        
+        const productDetails = Object.values(imageObj).map(item => ({
+          brand: item.brand,
+          name: item.name,
+          category: item.category
+        }));
+        const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
+
+        await refreshPrompt('studio', productList);
+        // Reset lifestyle prompt, don't generate it yet
+        setPrompts(prev => ({ ...prev, lifestyle: '' }));
+        
         setCurrentStep(3);
         setLoadingState('IDLE');
       };
@@ -565,7 +574,7 @@
                 ))}
                 <div className="flex justify-end mt-4">
                   <button
-                    onClick={generatePrompts}
+                    onClick={() => generatePrompts(productImages)}
                     disabled={Object.keys(selectedImages).length !== Object.keys(productImages).length}
                     className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
@@ -761,7 +770,7 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              <p className="text-xs text-gray-300 mt-1">v1.3.2</p>
+              <p className="text-xs text-gray-300 mt-1">v1.3.3</p>
             </div>
     
             {error && (
