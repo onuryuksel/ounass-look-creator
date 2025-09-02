@@ -709,22 +709,6 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKUs for personal shopping.</p>
-              <button 
-                onClick={async () => {
-                  try {
-                    const response = await fetch('/api/test');
-                    const data = await response.json();
-                    console.log('API Test Result:', data);
-                    alert(`API Test: ${data.message}\nEnvironment: ${data.env}`);
-                  } catch (error) {
-                    console.error('API Test Error:', error);
-                    alert('API Test Failed: ' + error.message);
-                  }
-                }}
-                className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
-              >
-                Test API Connection
-              </button>
             </div>
     
             {error && (
