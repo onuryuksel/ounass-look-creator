@@ -175,72 +175,50 @@
           return Promise.race([fetchPromise, timeoutPromise]);
         });
     
-        let images = {};
+        let successfulResults = [];
         let firstError = null;
-        let successCount = 0;
-        let hasErrors = false;
-    
-        // Process results as they complete (faster feedback)
-        const results = await Promise.allSettled(fetchPromises);
-        
-        // Reset counters for accurate final calculation
-        let finalSuccessCount = 0;
         let finalHasErrors = false;
         
         results.forEach((result, index) => {
-          if (result.status === 'fulfilled' && result.value) {
-            console.log(`[Debug] Result value structure:`, result.value);
-            if (result.value.images && result.value.images.srcs && result.value.images.srcs.length > 0) {
-              images[result.value.sku] = result.value.images;
-              finalSuccessCount++;
-              console.log(`[Result] SKU ${result.value.sku}: SUCCESS - ${result.value.images.srcs.length} images`);
-              // Update progress in real-time
-              setProductImages(prev => ({ ...prev, [result.value.sku]: result.value.images }));
-              
-              // Clear error if we now have enough successful SKUs
-              if (finalSuccessCount >= 2) {
-                setError(null);
-                console.log(`[Real-time] Error cleared - now have ${finalSuccessCount} successful SKUs`);
-              }
-            } else {
-              console.log(`[Debug] SKU ${result.value.sku || 'unknown'}: No valid images in result.value`);
-              console.log(`[Debug] Images structure:`, result.value.images);
-            }
-          } else if (result.status === 'rejected' && result.reason) {
+          if (result.status === 'fulfilled' && result.value && result.value.images && result.value.images.srcs && result.value.images.srcs.length > 0) {
+            successfulResults.push({ sku: result.value.sku, images: result.value.images });
+          } else if (result.status === 'rejected' || (result.value && result.value.error)) {
             finalHasErrors = true;
-            console.log(`[Result] SKU ${skus[index]}: FAILED - ${result.reason}`);
             if (!firstError) {
-              firstError = result.reason;
+              firstError = result.reason || (result.value && result.value.error);
             }
           }
         });
-    
+
+        // --- NEW: Re-sort the results based on the original user input order ---
+        const sortedImages = validSkus.map(sku => {
+          return successfulResults.find(result => result.sku === sku);
+        }).filter(Boolean); // Filter out any undefined entries if a SKU failed
+        // --- END RE-SORT ---
+
         const endTime = performance.now();
         const totalTime = Math.round(endTime - startTime);
         
-        console.log(`[Completed] Total images for ${finalSuccessCount} SKUs successfully fetched in ${totalTime}ms.`);
-        console.log(`[Debug] Final images object:`, images);
-        console.log(`[Debug] Final success count: ${finalSuccessCount}`);
-        console.log(`[Debug] Product images state:`, Object.keys(productImages).length);
+        console.log(`[Completed] Total images for ${sortedImages.length} SKUs successfully fetched in ${totalTime}ms.`);
         
-        // Final state update with accurate counts
-        setProductImages(images);
+        // Final state update with the correctly sorted array
+        setProductImages(sortedImages);
         setLoadingState('IDLE');
         
         // Smart error handling: prioritize success over errors
-        if (finalSuccessCount >= 2) {
+        if (sortedImages.length >= 2) {
           // We have enough successful SKUs, clear errors and proceed
           setError(null);
           setCurrentStep(2); // Go to step 2 for image selection
-          console.log(`[Success] Proceeding to step 2 with ${finalSuccessCount} successful SKUs`);
-        } else if (finalSuccessCount > 0) {
+          console.log(`[Success] Proceeding to step 2 with ${sortedImages.length} successful SKUs`);
+        } else if (sortedImages.length > 0) {
           // Some SKUs succeeded but not enough, show partial success message
-          setError(`Only ${finalSuccessCount} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
-          console.log(`[Debug] Not enough SKUs: ${finalSuccessCount} < 2`);
+          setError(`Only ${sortedImages.length} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
+          console.log(`[Debug] Not enough SKUs: ${sortedImages.length} < 2`);
         } else {
           // No SKUs succeeded, show error
           setError(`Failed to fetch images from all proxy services. Please try again.`);
-          console.log(`[Debug] No SKUs succeeded: ${finalSuccessCount} = 0`);
+          console.log(`[Debug] No SKUs succeeded: ${sortedImages.length} = 0`);
         }
       };
     
@@ -691,8 +669,8 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.5.1 */}
-              <p className="text-xs text-gray-300 mt-1">v1.5.1</p>
+              {/* Force refresh for v1.5.2 */}
+              <p className="text-xs text-gray-300 mt-1">v1.5.2</p>
             </div>
     
             {error && (
