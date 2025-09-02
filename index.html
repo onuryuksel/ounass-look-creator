@@ -74,7 +74,14 @@
           // Logging the request step for each SKU
           console.log(`[Step 1] Sending API request for SKU ${sku} via proxy.`);
           return fetchWithRetry(url).then(response => {
-            if (!response.ok) throw new Error('API response failed.');
+            if (!response) {
+                console.error("No response from fetchWithRetry for SKU:", sku);
+                throw new Error("No response from fetchWithRetry.");
+            }
+            if (!response.ok) {
+                console.error("API response was not ok:", response);
+                throw new Error('API response failed.');
+            }
             return response.json();
           }).then(data => {
             const content = JSON.parse(data.contents);
@@ -117,9 +124,9 @@
         const results = await Promise.allSettled(fetchPromises);
     
         results.forEach(result => {
-          if (result.status === 'fulfilled' && result.value.images) {
+          if (result.status === 'fulfilled' && result.value && result.value.images) {
             images[result.value.sku] = result.value.images;
-          } else if (result.status === 'rejected' && !firstError) {
+          } else if (result.status === 'rejected' && result.reason && !firstError) {
             // Set the first error encountered for display
             firstError = result.reason;
           }
@@ -162,7 +169,7 @@
               systemInstruction: { parts: [{ text: systemPrompt }] },
             };
     
-            const apiKey = process.env.API_KEY || "";
+            const apiKey = "<YOUR_VARS_API_KEY>"; // Updated to a placeholder
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             const response = await fetch(apiUrl, {
               method: 'POST',
@@ -181,7 +188,6 @@
             }
     
           } else if (type === 'lifestyle') {
-            // This is now handled by the separate lifestyle prompt creation function
             const lifestylePrompt = `A professional lifestyle photo of a person wearing ${productList} in a sleek urban setting, with natural lighting, a candid shot, editorial style, high resolution.`;
             setPrompts(prev => ({ ...prev, lifestyle: lifestylePrompt }));
           }
@@ -223,7 +229,7 @@
             systemInstruction: { parts: [{ text: systemPrompt }] },
           };
     
-          const apiKey = process.env.API_KEY || "";
+          const apiKey = "<YOUR_VARS_API_KEY>"; // Updated to a placeholder
           const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
     
           const response = await fetch(apiUrl, {
@@ -299,7 +305,7 @@
             }
           };
           
-          const apiKey = process.env.API_KEY || "";
+          const apiKey = "<YOUR_VARS_API_KEY>"; // Updated to a placeholder
           const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
           
           const response = await fetch(apiUrl, {
