@@ -15,8 +15,13 @@ export default async function handler(req, res) {
   try {
     const { prompt, images } = req.body;
     
+    // --- CRITICAL RULE INJECTION ---
+    const finalPrompt = `${prompt}. IMPORTANT: The products in the images provided MUST be used exactly as they are. Do not alter, modify, or replace any product details, shapes, or colors. Replicate them perfectly in the final image.`;
+    // --- END CRITICAL RULE INJECTION ---
+
     console.log('--- RECEIVED IMAGE GENERATION REQUEST ---');
-    console.log('PROMPT RECEIVED:', prompt);
+    console.log('Original Prompt:', prompt);
+    console.log('Final Injected Prompt:', finalPrompt);
     console.log('IMAGE COUNT:', images?.length);
     console.log('-----------------------------------------');
     
@@ -29,7 +34,7 @@ export default async function handler(req, res) {
     const payload = {
       contents: [{
         parts: [
-          { text: prompt },
+          { text: finalPrompt }, // Use the modified prompt
           ...images.map(base64Str => ({
             inlineData: {
               mimeType: "image/jpeg",
