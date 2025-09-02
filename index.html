@@ -266,46 +266,27 @@
           
           setLoadingState('GENERATING_IMAGE');
     
-          const payload = {
-            contents: [{
-              parts: [
-                { text: prompts[selectedPrompt] },
-                ...base64Images.map(base64Str => ({
-                  inlineData: {
-                    mimeType: "image/jpeg", // Assuming JPEG, can be detected from headers if needed
-                    data: base64Str.split(',')[1]
-                  }
-                }))
-              ]
-            }],
-            generationConfig: {
-              responseModalities: ["TEXT", "IMAGE"]
-            }
-          };
-          
-          const apiKey = "<YOUR_VARS_API_KEY>"; // Updated to a placeholder
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-          
-          const response = await fetch(apiUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
+          const response = await fetch('/api/gemini-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: prompts[selectedPrompt],
+              images: base64Images
+            })
           });
-    
+
           if (!response.ok) {
-            throw new Error('Image generation service is not responding.');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Image generation failed');
           }
-    
+          
           const result = await response.json();
           
-          const generatedImagePart = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-    
-          if (generatedImagePart && generatedImagePart.inlineData.data) {
-              const base64Data = generatedImagePart.inlineData.data;
-              setGeneratedImage(`data:image/png;base64,${base64Data}`);
-              setCurrentStep(4);
+          if (result.success) {
+            setGeneratedImage(result.image);
+            setCurrentStep(4);
           } else {
-              throw new Error('Failed to retrieve image data.');
+            throw new Error(result.error || 'Failed to generate image');
           }
     
         } catch (e) {
