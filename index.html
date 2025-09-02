@@ -183,19 +183,26 @@
         // Process results as they complete (faster feedback)
         const results = await Promise.allSettled(fetchPromises);
         
+        // Reset counters for accurate final calculation
+        let finalSuccessCount = 0;
+        let finalHasErrors = false;
+        
         results.forEach((result, index) => {
           if (result.status === 'fulfilled' && result.value && result.value.images) {
             images[result.value.sku] = result.value.images;
-            successCount++;
+            finalSuccessCount++;
+            console.log(`[Result] SKU ${result.value.sku}: SUCCESS - ${result.value.images.length} images`);
             // Update progress in real-time
             setProductImages(prev => ({ ...prev, [result.value.sku]: result.value.images }));
             
             // Clear error if we now have enough successful SKUs
-            if (successCount >= 2) {
+            if (finalSuccessCount >= 2) {
               setError(null);
+              console.log(`[Real-time] Error cleared - now have ${finalSuccessCount} successful SKUs`);
             }
           } else if (result.status === 'rejected' && result.reason) {
-            hasErrors = true;
+            finalHasErrors = true;
+            console.log(`[Result] SKU ${skus[index]}: FAILED - ${result.reason}`);
             if (!firstError) {
               firstError = result.reason;
             }
@@ -205,21 +212,21 @@
         const endTime = performance.now();
         const totalTime = Math.round(endTime - startTime);
         
-        console.log(`[Completed] Total images for ${successCount} SKUs successfully fetched in ${totalTime}ms.`);
+        console.log(`[Completed] Total images for ${finalSuccessCount} SKUs successfully fetched in ${totalTime}ms.`);
         
-        // Final state update
+        // Final state update with accurate counts
         setProductImages(images);
         setLoadingState('IDLE');
         
         // Smart error handling: prioritize success over errors
-        if (successCount >= 2) {
+        if (finalSuccessCount >= 2) {
           // We have enough successful SKUs, clear errors and proceed
           setError(null);
           setCurrentStep(2);
-          console.log(`[Success] Proceeding to step 2 with ${successCount} successful SKUs`);
-        } else if (successCount > 0) {
+          console.log(`[Success] Proceeding to step 2 with ${finalSuccessCount} successful SKUs`);
+        } else if (finalSuccessCount > 0) {
           // Some SKUs succeeded but not enough, show partial success message
-          setError(`Only ${successCount} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
+          setError(`Only ${finalSuccessCount} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
         } else {
           // No SKUs succeeded, show error
           setError(`Failed to fetch images from all proxy services. Please try again.`);
