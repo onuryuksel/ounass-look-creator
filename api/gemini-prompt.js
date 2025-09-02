@@ -10,35 +10,26 @@ export default async function handler(req, res) {
     
     // Determine the prompt based on the type
     if (type === 'studio') {
-      systemPrompt = `You are a creative director. Your task is to complete the user's prompt by providing a creative description. The user will provide a template with a placeholder. Replace the placeholder with your description for a luxury e-commerce studio photoshoot. Focus on the model's pose, professional lighting, and camera details. Be concise and professional.`;
-      userQuery = `Complete the following prompt by replacing the placeholder: "A photorealistic full-body studio photograph of a model wearing the following exact products. It is critical these products are not altered in any way: ${productList}. [YOUR CREATIVE DESCRIPTION HERE: Describe the model's elegant pose, the bright and professional lighting, camera details, and the seamless light grey background.]"`;
+      systemPrompt = `You are a creative director. Your task is to write a short, creative description for a luxury e-commerce studio photoshoot. Focus ONLY on the model's elegant pose, the professional, bright, even lighting, and specific camera details (e.g., lens, aperture). DO NOT mention the products or the background; that is already handled.`;
+      userQuery = `Write a creative description for a studio photoshoot.`;
     } else if (type === 'lifestyle') {
-      systemPrompt = `You are a creative director. Your task is to complete the user's prompt by providing a creative description. The user will provide a template with a placeholder. Replace the placeholder with your description for a luxury lifestyle fashion shoot based on the user's creative context.`;
-      userQuery = `Complete the following prompt by replacing the placeholder: "A photorealistic lifestyle photograph of a fashion model wearing the following exact products. It is critical these products are not altered in any way: ${productList}. The scene is '${lifestyleInputs.location}' with a '${lifestyleInputs.mood}' mood. [YOUR CREATIVE DESCRIPTION HERE: Describe the model's specific action, the lighting corresponding to '${lifestyleInputs.time}', and camera details like lens and aperture to bring the scene to life.]"`;
+      systemPrompt = `You are a creative director. Your task is to write a short, creative description for a luxury lifestyle fashion shoot. Focus ONLY on the model's specific action/pose, the lighting, and specific camera details. DO NOT mention the products or the location/mood; that is already handled.`;
+      userQuery = `Write a creative description for a lifestyle photoshoot with the following context: Location is '${lifestyleInputs.location}', mood is '${lifestyleInputs.mood}', time is '${lifestyleInputs.time}'.`;
     }
 
-    const payload = {
-      contents: [{ parts: [{ text: userQuery }] }],
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-    };
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'API key not configured' });
-    }
-
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash-preview-05-20',
     });
 
-    if (!response.ok) {
-      throw new Error('Gemini API request failed');
-    }
+    const result = await model.generateContent({
+      contents: [{ parts: [{ text: userQuery }] }],
+      generationConfig: {
+        maxOutputTokens: 100,
+        temperature: 0.1,
+      },
+    });
 
-    const result = await response.json();
     const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (generatedText) {

@@ -247,61 +247,47 @@
     
       // Generates a single prompt based on a type
       const refreshPrompt = async (type, productList, lifestyleData = null) => {
-        // This function is now more generic and receives the data it needs
         setLoadingState('GENERATING_PROMPTS');
         setError(null);
         
-        // Performance tracking
         const startTime = performance.now();
         console.log(`[Timing] Starting ${type} prompt generation...`);
     
         try {
-          // This block was refactored to fix a critical syntax error.
-          // The try...catch now correctly wraps the entire logic.
-          let apiPayload;
-          if (type === 'lifestyle') {
-            const { location, mood, time, extra } = lifestyleData;
-            const productDetails = Object.values(productImages).map(item => ({
-              brand: item.brand,
-              name: item.name,
-              category: item.category
-            }));
-            const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
-            apiPayload = { type: 'lifestyle', productList, lifestyleInputs: { location, mood, time, extra } };
-          } else {
-            apiPayload = { type: 'studio', productList };
+          const payload = { type, productList };
+          if (type === 'lifestyle' && lifestyleData) {
+            payload.lifestyleInputs = lifestyleData;
           }
-          
-          console.log(`[Timing] Sending ${type} prompt request to Gemini API...`);
-          const apiStartTime = performance.now();
-          
+
           const response = await fetch('/api/gemini-prompt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(apiPayload)
+            body: JSON.stringify(payload)
           });
-
-          const apiEndTime = performance.now();
-          console.log(`[Timing] Gemini API response received in ${Math.round(apiEndTime - apiStartTime)}ms`);
 
           if (!response.ok) throw new Error('API request failed');
           const result = await response.json();
           
           if (result.success) {
-            setPrompts(prev => ({ ...prev, [type]: result.prompt }));
+            const creativeDescription = result.prompt;
+            let finalPrompt = '';
+
+            // Manually construct the final prompt to ensure rules are always included
+            if (type === 'studio') {
+              finalPrompt = `A photorealistic full-body studio photograph of a model wearing the following exact products. It is critical these products are not altered in any way: ${productList}. ${creativeDescription}`;
+            } else {
+              finalPrompt = `A photorealistic lifestyle photograph of a fashion model wearing the following exact products. It is critical these products are not altered in any way: ${productList}. The scene is '${lifestyleData.location}' with a '${lifestyleData.mood}' mood. ${creativeDescription}`;
+            }
+            
+            setPrompts(prev => ({ ...prev, [type]: finalPrompt }));
+
             if (type === 'lifestyle') {
               setShowLifestyleForm(false);
             }
           } else {
             throw new Error(result.error || `Failed to generate ${type} prompt`);
           }
-          
-          const endTime = performance.now();
-          console.log(`[Timing] ${type} prompt generation completed in ${Math.round(endTime - startTime)}ms`);
-
         } catch (e) {
-          const endTime = performance.now();
-          console.error(`[Timing] ${type} prompt generation failed after ${Math.round(endTime - startTime)}ms:`, e.message);
           setError(`An error occurred while generating the prompt: ${e.message}`);
         } finally {
           setLoadingState('IDLE');
@@ -548,6 +534,7 @@
             return (
               <div className="flex flex-col space-y-6">
                 <h2 className="text-xl font-semibold mb-2">3. Select a Prompt and Generate Image</h2>
+                {/* This block was accidentally deleted. Re-adding it to show selected images. */}
                 <div className="flex flex-wrap gap-6 mb-8 p-4 bg-gray-100 rounded-xl">
                   {Object.keys(selectedImages).map(sku => (
                     <div key={sku} className="flex-1 min-w-[200px] bg-white p-4 rounded-lg shadow-md flex flex-col items-center text-center">
@@ -731,7 +718,7 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              <p className="text-xs text-gray-300 mt-1">v1.3.4</p>
+              <p className="text-xs text-gray-300 mt-1">v1.3.5</p>
             </div>
     
             {error && (
