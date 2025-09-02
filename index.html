@@ -37,37 +37,23 @@
       const [showLifestyleForm, setShowLifestyleForm] = useState(false);
       const [lifestyleInputs, setLifestyleInputs] = useState({ location: '', mood: '', time: '', extra: '' });
     
-      // Helper function to fetch a URL with a retry mechanism
-      const fetchWithRetry = async (url, retries = 3) => {
-        for (let i = 0; i < retries; i++) {
-          try {
-            const response = await fetch(url, {
-              // Add cache control for better performance
-              cache: 'no-cache',
-              // Add timeout for individual requests
-              signal: AbortSignal.timeout(10000) // 10 second timeout per request
-            });
-            
-            if (response.ok) {
-              return response;
-            }
-            
-            // If response is not ok, don't retry immediately
-            if (response.status >= 400 && response.status < 500) {
-              throw new Error(`Client error: ${response.status}`);
-            }
-            
-          } catch (e) {
-            console.log(`[Retry ${i + 1}/${retries}] Attempt failed for ${url}: ${e.message}`);
-            
-            if (i === retries - 1) throw e;
-            
-            // Exponential backoff with jitter for better performance
-            const delay = Math.pow(2, i) * 100 + Math.random() * 100;
-            await new Promise(resolve => setTimeout(resolve, delay));
+      // Helper function to fetch a URL (retry mechanism removed for simplicity)
+      const fetchWithRetry = async (url) => {
+        try {
+          const response = await fetch(url, {
+            cache: 'no-cache',
+            signal: AbortSignal.timeout(12000)
+          });
+          
+          if (response.ok) {
+            return response;
           }
+          
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        } catch (e) {
+          console.error(`[Error] Fetch failed for ${url}: ${e.message}`);
+          throw e;
         }
-        throw new Error('All fetch attempts failed.');
       };
     
       // Fetches images for a given SKU from the Ounass API using a proxy to bypass CORS
@@ -90,43 +76,20 @@
     
         // Creating an array of promises to fetch all SKUs concurrently with timeout
         const fetchPromises = validSkus.map(sku => {
-          // Try multiple proxy services for better reliability and speed
-          const proxyUrls = [
-            `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.ounass.ae/product/findbysku?sku=${sku}`)}`,
-            `https://cors-anywhere.herokuapp.com/https://www.ounass.ae/product/findbysku?sku=${sku}`,
-            `https://thingproxy.freeboard.io/fetch/https://www.ounass.ae/product/findbysku?sku=${sku}`
-          ];
+          // Use only the working proxy service
+          const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.ounass.ae/product/findbysku?sku=${sku}`)}`;
           
-          console.log(`[Step 1] Sending API request for SKU ${sku} via multiple proxies.`);
+          console.log(`[Step 1] Sending API request for SKU ${sku} via proxy.`);
           
           // Add timeout to prevent hanging requests
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), 8000) // Reduced to 8 seconds
+            setTimeout(() => reject(new Error('Request timeout')), 12000) // Increased to 12 seconds for reliability
           );
           
-          // Try proxies in sequence until one works
-          const tryProxies = async () => {
-            for (let i = 0; i < proxyUrls.length; i++) {
-              try {
-                console.log(`[Step 1.${i + 1}] Trying proxy ${i + 1} for SKU ${sku}`);
-                const response = await fetch(proxyUrls[i], {
-                  cache: 'no-cache',
-                  signal: AbortSignal.timeout(8000)
-                });
-                
-                if (response.ok) {
-                  console.log(`[Success] Proxy ${i + 1} worked for SKU ${sku}`);
-                  return response;
-                }
-              } catch (e) {
-                console.log(`[Warning] Proxy ${i + 1} failed for SKU ${sku}: ${e.message}`);
-                if (i === proxyUrls.length - 1) throw e;
-              }
-            }
-            throw new Error('All proxies failed');
-          };
-          
-          const fetchPromise = tryProxies().then(response => {
+          const fetchPromise = fetch(url, {
+            cache: 'no-cache',
+            signal: AbortSignal.timeout(12000)
+          }).then(response => {
             if (!response) {
                 console.error("No response from fetchWithRetry for SKU:", sku);
                 throw new Error("No response from fetchWithRetry.");
@@ -736,9 +699,6 @@
                       </div>
                       <p className="text-sm text-gray-500">
                         {Object.keys(productImages).length} of {skus.filter(s => s).length} SKUs processed
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Using multiple proxy services for faster loading
                       </p>
                     </div>
                   )}
