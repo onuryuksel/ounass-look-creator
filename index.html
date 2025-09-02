@@ -246,13 +246,47 @@
 
           let finalPrompt = '';
           if (isLifestyle) {
-            // Construct the DYNAMIC lifestyle prompt
-            finalPrompt = `A photorealistic lifestyle photograph of a fashion model. The model is wearing the exact products from the provided reference images. It is critical that these products are not altered in any way. The outfit consists of: ${productReferences}. The scene is '${lifestyleInputs.location}' with a '${lifestyleInputs.mood}' mood. The lighting should reflect '${lifestyleInputs.time}'. The model is captured in a natural, candid pose. ${lifestyleInputs.extra || ''}`;
+            // Construct the DYNAMIC lifestyle prompt with AGGRESSIVE product preservation
+            finalPrompt = `A photorealistic lifestyle photograph of a fashion model. 
+
+CRITICAL REQUIREMENT - PRODUCT PRESERVATION:
+The model MUST wear the EXACT products from the provided reference images. These products are NOT to be used as inspiration - they are to be REPLICATED PERFECTLY with zero modifications.
+
+PRODUCT SPECIFICATIONS:
+- Image 1: ${productDetails[0]?.category || 'item'} - REPLICATE EXACTLY
+- Image 2: ${productDetails[1]?.category || 'item'} - REPLICATE EXACTLY  
+- Image 3: ${productDetails[2]?.category || 'item'} - REPLICATE EXACTLY
+- Image 4: ${productDetails[3]?.category || 'item'} - REPLICATE EXACTLY
+
+SCENE SETTING:
+Location: '${lifestyleInputs.location}' with a '${lifestyleInputs.mood}' mood.
+Lighting: '${lifestyleInputs.time}'.
+Additional details: ${lifestyleInputs.extra || ''}
+
+FINAL INSTRUCTION:
+Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
             setPrompts(prev => ({ ...prev, lifestyle: finalPrompt }));
             setShowLifestyleForm(false);
           } else {
-            // Construct the DYNAMIC studio prompt
-            finalPrompt = `A photorealistic full-body studio photograph of a model. The model is wearing the exact products from the provided reference images. It is critical that these products are not altered in any way. The outfit consists of: ${productReferences}. The model's pose is elegant and static. The lighting is bright and professional on a seamless light grey background.`;
+            // Construct the DYNAMIC studio prompt with AGGRESSIVE product preservation
+            finalPrompt = `A photorealistic full-body studio photograph of a model.
+
+CRITICAL REQUIREMENT - PRODUCT PRESERVATION:
+The model MUST wear the EXACT products from the provided reference images. These products are NOT to be used as inspiration - they are to be REPLICATED PERFECTLY with zero modifications.
+
+PRODUCT SPECIFICATIONS:
+- Image 1: ${productDetails[0]?.category || 'item'} - REPLICATE EXACTLY
+- Image 2: ${productDetails[1]?.category || 'item'} - REPLICATE EXACTLY
+- Image 3: ${productDetails[2]?.category || 'item'} - REPLICATE EXACTLY  
+- Image 4: ${productDetails[3]?.category || 'item'} - REPLICATE EXACTLY
+
+STUDIO SETTING:
+Pose: Elegant and static.
+Background: Seamless light grey.
+Lighting: Bright and professional.
+
+FINAL INSTRUCTION:
+Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
             setPrompts({ studio: finalPrompt, lifestyle: '' });
             setCurrentStep(3);
           }
@@ -678,8 +712,8 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.6.0 */}
-              <p className="text-xs text-gray-300 mt-1">v1.6.0</p>
+              {/* Force refresh for v1.6.1 */}
+              <p className="text-xs text-gray-300 mt-1">v1.6.1</p>
             </div>
     
             {error && (
