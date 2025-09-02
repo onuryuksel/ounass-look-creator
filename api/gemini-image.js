@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     
     console.log(`Using model: ${model}`);
     
-    const apiUrl = `https://generativelaanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     
     // Add retry logic with exponential backoff for rate limiting
     let response;
