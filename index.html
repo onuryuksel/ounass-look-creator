@@ -161,30 +161,19 @@
     
         try {
           if (type === 'studio') {
-            const userQuery = `Create a professional, high-fashion e-commerce studio photography prompt for a model wearing all of these products to create a single, cohesive look: ${productList}. The prompt must ensure the products themselves are not altered or morphed in any way.`;
-            const systemPrompt = "You are a professional product photographer and creative director. Your task is to write a concise and compelling studio photography prompt for a single image. The prompt should focus on a clean, luxurious background (e.g., seamless white or light gray), professional lighting, and clear details, suitable for an e-commerce website. Emphasize that the final output should be a single look on a model and that all products must be included and styled together, without any individual product photos.";
-    
-            const payload = {
-              contents: [{ parts: [{ text: userQuery }] }],
-              systemInstruction: { parts: [{ text: systemPrompt }] },
-            };
-    
-            const apiKey = "<YOUR_VARS_API_KEY>"; // Updated to a placeholder
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            const response = await fetch(apiUrl, {
+            const response = await fetch('/api/gemini-prompt', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
+              body: JSON.stringify({ type: 'studio', productList })
             });
-    
-            if (!response.ok) throw new Error('API request failed.');
+
+            if (!response.ok) throw new Error('API request failed');
             const result = await response.json();
-            const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-            if (generatedText) {
-              setPrompts(prev => ({ ...prev, studio: generatedText }));
+            
+            if (result.success) {
+              setPrompts(prev => ({ ...prev, studio: result.prompt }));
             } else {
-              throw new Error('Failed to generate prompt.');
+              throw new Error(result.error || 'Failed to generate prompt');
             }
     
           } else if (type === 'lifestyle') {
@@ -221,35 +210,24 @@
           }));
           const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
     
-          const userQuery = `Create a high-fashion, professional visual prompt for a person wearing these products: ${productList}. The photo should be taken in "${location}", with a "${mood}" mood, and at "${time}". Extra details: "${extra}". The prompt must strictly ensure the products themselves are not altered or morphed in any way.`;
-          const systemPrompt = "You are an assistant to a professional fashion photographer. Your task is to generate a detailed and creative visual prompt for a high-fashion photoshoot based on user inputs. The prompt should be a single, descriptive sentence. Ensure the prompt explicitly states that the products should not be altered.";
-    
-          const payload = {
-            contents: [{ parts: [{ text: userQuery }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-          };
-    
-          const apiKey = "<YOUR_VARS_API_KEY>"; // Updated to a placeholder
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-    
-          const response = await fetch(apiUrl, {
+          const response = await fetch('/api/gemini-prompt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ 
+              type: 'lifestyle', 
+              productList, 
+              lifestyleInputs: { location, mood, time, extra } 
+            })
           });
-    
-          if (!response.ok) {
-            throw new Error('API request failed.');
-          }
-    
+
+          if (!response.ok) throw new Error('API request failed');
           const result = await response.json();
-          const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-          if (generatedText) {
-            setPrompts(prev => ({ ...prev, lifestyle: generatedText }));
+          
+          if (result.success) {
+            setPrompts(prev => ({ ...prev, lifestyle: result.prompt }));
             setShowLifestyleForm(false);
           } else {
-            throw new Error('Failed to generate prompt.');
+            throw new Error(result.error || 'Failed to generate prompt');
           }
         } catch (e) {
           setError(`An error occurred while generating the prompt: ${e.message}`);
