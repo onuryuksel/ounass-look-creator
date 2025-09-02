@@ -256,18 +256,29 @@
         console.log(`[Timing] Starting ${type} prompt generation...`);
     
         try {
-          const payload = { type, productList };
-          if (type === 'lifestyle' && lifestyleData) {
-            payload.lifestyleInputs = lifestyleData;
+          // This block was refactored to fix a critical syntax error.
+          // The try...catch now correctly wraps the entire logic.
+          let apiPayload;
+          if (type === 'lifestyle') {
+            const { location, mood, time, extra } = lifestyleData;
+            const productDetails = Object.values(productImages).map(item => ({
+              brand: item.brand,
+              name: item.name,
+              category: item.category
+            }));
+            const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
+            apiPayload = { type: 'lifestyle', productList, lifestyleInputs: { location, mood, time, extra } };
+          } else {
+            apiPayload = { type: 'studio', productList };
           }
-
+          
           console.log(`[Timing] Sending ${type} prompt request to Gemini API...`);
           const apiStartTime = performance.now();
           
           const response = await fetch('/api/gemini-prompt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(apiPayload)
           });
 
           const apiEndTime = performance.now();
@@ -277,19 +288,17 @@
           const result = await response.json();
           
           if (result.success) {
-            setPrompts(prev => ({ ...prev, studio: result.prompt }));
-            const endTime = performance.now();
-            console.log(`[Timing] Studio prompt generation completed in ${Math.round(endTime - startTime)}ms`);
+            setPrompts(prev => ({ ...prev, [type]: result.prompt }));
+            if (type === 'lifestyle') {
+              setShowLifestyleForm(false);
+            }
           } else {
-            throw new Error(result.error || 'Failed to generate prompt');
+            throw new Error(result.error || `Failed to generate ${type} prompt`);
           }
-    
-          } else if (type === 'lifestyle') {
-            // Lifestyle prompt'u başlangıçta boş bırak, sadece kullanıcı generate butonuna tıkladığında oluştur
-            setPrompts(prev => ({ ...prev, lifestyle: '' }));
-            const endTime = performance.now();
-            console.log(`[Timing] Lifestyle prompt reset completed in ${Math.round(endTime - startTime)}ms`);
-          }
+          
+          const endTime = performance.now();
+          console.log(`[Timing] ${type} prompt generation completed in ${Math.round(endTime - startTime)}ms`);
+
         } catch (e) {
           const endTime = performance.now();
           console.error(`[Timing] ${type} prompt generation failed after ${Math.round(endTime - startTime)}ms:`, e.message);
@@ -321,56 +330,8 @@
       
       // Generates the lifestyle prompt based on user inputs using Gemini API
       const generateLifestylePrompt = async () => {
-        setLoadingState('GENERATING_PROMPTS');
-        setError(null);
-        
-        // Performance tracking
-        const startTime = performance.now();
-        console.log(`[Timing] Starting lifestyle prompt generation with custom inputs...`);
-        
-        try {
-          const { location, mood, time, extra } = lifestyleInputs;
-          const productDetails = Object.values(productImages).map(item => ({
-            brand: item.brand,
-            name: item.name,
-            category: item.category
-          }));
-          const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
-    
-          console.log(`[Timing] Sending lifestyle prompt request to Gemini API...`);
-          const apiStartTime = performance.now();
-          
-          const response = await fetch('/api/gemini-prompt', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              type: 'lifestyle', 
-              productList, 
-              lifestyleInputs: { location, mood, time, extra } 
-            })
-          });
-
-          const apiEndTime = performance.now();
-          console.log(`[Timing] Gemini API response received in ${Math.round(apiEndTime - apiStartTime)}ms`);
-
-          if (!response.ok) throw new Error('API request failed');
-          const result = await response.json();
-          
-          if (result.success) {
-            setPrompts(prev => ({ ...prev, lifestyle: result.prompt }));
-            setShowLifestyleForm(false);
-            const endTime = performance.now();
-            console.log(`[Timing] Lifestyle prompt generation completed in ${Math.round(endTime - startTime)}ms`);
-          } else {
-            throw new Error(result.error || 'Failed to generate prompt');
-          }
-        } catch (e) {
-          const endTime = performance.now();
-          console.error(`[Timing] Lifestyle prompt generation failed after ${Math.round(endTime - startTime)}ms:`, e.message);
-          setError(`An error occurred while generating the prompt: ${e.message}`);
-        } finally {
-          setLoadingState('IDLE');
-        }
+        // This function now calls the generic refreshPrompt
+        await refreshPrompt('lifestyle', null, lifestyleInputs);
       };
     
       // Helper function to convert a URL to a Base64 string
@@ -770,7 +731,7 @@
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              <p className="text-xs text-gray-300 mt-1">v1.3.3</p>
+              <p className="text-xs text-gray-300 mt-1">v1.3.4</p>
             </div>
     
             {error && (
