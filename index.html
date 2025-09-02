@@ -1,658 +1,231 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ounass Look Generator</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- React and Babel for single-file JSX compilation -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    input:focus, button:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fotoğraf Stüdyosu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .container {
+            max-width: 800px;
+        }
+    </style>
 </head>
-<body>
-  <div id="root"></div>
 
-  <script type="text/babel">
-    const { useState, useRef } = React;
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-    // The main App component containing all logic and UI
-    const App = () => {
-      const [skus, setSkus] = useState(['', '']);
-      const [productImages, setProductImages] = useState({});
-      const [selectedImages, setSelectedImages] = useState({});
-      const [prompts, setPrompts] = useState({ studio: '', lifestyle: '' });
-      const [selectedPrompt, setSelectedPrompt] = useState('studio');
-      const [generatedImage, setGeneratedImage] = useState(null);
-      const [loadingState, setLoadingState] = useState('IDLE'); // More granular loading state
-      const [error, setError] = useState(null);
-      const [currentStep, setCurrentStep] = useState(1);
-      const [showLifestyleForm, setShowLifestyleForm] = useState(false);
-      const [lifestyleInputs, setLifestyleInputs] = useState({ location: '', mood: '', time: '', extra: '' });
-    
-      // Helper function to fetch a URL with a retry mechanism
-      const fetchWithRetry = async (url, retries = 3) => {
-        for (let i = 0; i < retries; i++) {
-          try {
-            const response = await fetch(url);
-            if (response.ok) {
-              return response;
-            }
-          } catch (e) {
-            if (i === retries - 1) throw e;
-            await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 100));
-          }
-        }
-        throw new Error('All fetch attempts failed.');
-      };
-    
-      // Fetches images for a given SKU from the Ounass API using a proxy to bypass CORS
-      const fetchImages = async () => {
-        setError(null);
-        setLoadingState('FETCHING_IMAGES');
-        const validSkus = skus.filter(s => s);
-        
-        if (validSkus.length < 2) {
-          setError('Please enter at least 2 SKUs.');
-          setLoadingState('IDLE');
-          return;
-        }
-    
-        // Logging the start of the process
-        console.log(`[Initiating] Starting image fetching process for ${validSkus.length} SKUs.`);
-    
-        // Creating an array of promises to fetch all SKUs concurrently
-        const fetchPromises = validSkus.map(sku => {
-          const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.ounass.ae/product/findbysku?sku=${sku}`)}`;
-          // Logging the request step for each SKU
-          console.log(`[Step 1] Sending API request for SKU ${sku} via proxy.`);
-          return fetchWithRetry(url).then(response => {
-            if (!response.ok) throw new Error('API response failed.');
-            return response.json();
-          }).then(data => {
-            const content = JSON.parse(data.contents);
-            const imageSrcs = content.media
-              .filter(m => m.mediaType === 'image')
-              .map(m => `https://ounass-ae.atgcdn.ae/pub/media/catalog/product${m.src}`);
-    
-            if (imageSrcs.length > 0) {
-              // Logging success for a specific SKU
-              console.log(`[Success] Found ${imageSrcs.length} images for SKU ${sku}.`);
-              const brand = content.analytics?.brand || 'Unknown Brand';
-              const name = content.analytics?.name || 'Unknown Product';
-              const category = content.analytics?.department || content.analytics?.class || 'Unknown Category';
-              return {
-                sku,
-                images: {
-                  srcs: imageSrcs,
-                  description: `${brand} ${name} (${category})`,
-                  brand,
-                  name,
-                  category
-                }
-              };
-            } else {
-              // Logging a warning if no images are found
-              console.warn(`[Warning] No images found for SKU ${sku}.`);
-              throw new Error(`No images found for SKU ${sku}.`);
-            }
-          }).catch(e => {
-            // Logging an error for a specific SKU
-            console.error(`[Error] An error occurred for SKU ${sku}: ${e.message}`);
-            return { sku, error: e.message };
-          });
-        });
-    
-        let images = {};
-        let firstError = null;
-    
-        // Waiting for all promises to settle (either resolve or reject)
-        const results = await Promise.allSettled(fetchPromises);
-    
-        results.forEach(result => {
-          if (result.status === 'fulfilled' && result.value.images) {
-            images[result.value.sku] = result.value.images;
-          } else if (result.status === 'rejected' && !firstError) {
-            // Set the first error encountered for display
-            firstError = result.reason;
-          }
-        });
-    
-        // Logging the completion of the process
-        console.log(`[Completed] Total images for ${Object.keys(images).length} SKUs successfully fetched.`);
-        
-        setProductImages(images);
-        setLoadingState('IDLE');
-    
-        if (firstError) {
-          setError(`An error occurred: ${firstError}`);
-        } else if (Object.keys(images).length >= 2) {
-          setCurrentStep(2);
-        } else {
-          setError('At least two valid SKUs with images are required.');
-        }
-      };
-    
-      // Generates a single prompt based on a type
-      const refreshPrompt = async (type) => {
-        setLoadingState('GENERATING_PROMPTS');
-        setError(null);
-    
-        const productDetails = Object.values(productImages).map(item => ({
-          brand: item.brand,
-          name: item.name,
-          category: item.category
-        }));
-        const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
-    
-        try {
-          if (type === 'studio') {
-            const userQuery = `Create a professional, high-fashion e-commerce studio photography prompt for a model wearing all of these products to create a single, cohesive look: ${productList}. The prompt must ensure the products themselves are not altered or morphed in any way.`;
-            const systemPrompt = "You are a professional product photographer and creative director. Your task is to write a concise and compelling studio photography prompt for a single image. The prompt should focus on a clean, luxurious background (e.g., seamless white or light gray), professional lighting, and clear details, suitable for an e-commerce website. Emphasize that the final output should be a single look on a model and that all products must be included and styled together, without any individual product photos.";
-    
-            const payload = {
-              contents: [{ parts: [{ text: userQuery }] }],
-              systemInstruction: { parts: [{ text: systemPrompt }] },
-            };
-    
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            const response = await fetch(apiUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-    
-            if (!response.ok) throw new Error('API request failed.');
-            const result = await response.json();
-            const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-            if (generatedText) {
-              setPrompts(prev => ({ ...prev, studio: generatedText }));
-            } else {
-              throw new Error('Failed to generate prompt.');
-            }
-    
-          } else if (type === 'lifestyle') {
-            // This is now handled by the separate lifestyle prompt creation function
-            const lifestylePrompt = `A professional lifestyle photo of a person wearing ${productList} in a sleek urban setting, with natural lighting, a candid shot, editorial style, high resolution.`;
-            setPrompts(prev => ({ ...prev, lifestyle: lifestylePrompt }));
-          }
-        } catch (e) {
-          setError(`An error occurred while generating the prompt: ${e.message}`);
-        } finally {
-          setLoadingState('IDLE');
-        }
-      };
-    
-    
-      // Generates both prompts initially
-      const generatePrompts = async () => {
-        setLoadingState('GENERATING_PROMPTS');
-        await refreshPrompt('studio');
-        await refreshPrompt('lifestyle'); // Keep this for initial prompt generation
-        setCurrentStep(3);
-        setLoadingState('IDLE');
-      };
-      
-      // Generates the lifestyle prompt based on user inputs using Gemini API
-      const generateLifestylePrompt = async () => {
-        setLoadingState('GENERATING_PROMPTS');
-        setError(null);
-        try {
-          const { location, mood, time, extra } = lifestyleInputs;
-          const productDetails = Object.values(productImages).map(item => ({
-            brand: item.brand,
-            name: item.name,
-            category: item.category
-          }));
-          const productList = productDetails.map(p => `${p.brand} ${p.name} (${p.category})`).join(', ');
-    
-          const userQuery = `Create a high-fashion, professional visual prompt for a person wearing these products: ${productList}. The photo should be taken in "${location}", with a "${mood}" mood, and at "${time}". Extra details: "${extra}". The prompt must strictly ensure the products themselves are not altered or morphed in any way.`;
-          const systemPrompt = "You are an assistant to a professional fashion photographer. Your task is to generate a detailed and creative visual prompt for a high-fashion photoshoot based on user inputs. The prompt should be a single, descriptive sentence. Ensure the prompt explicitly states that the products should not be altered.";
-    
-          const payload = {
-            contents: [{ parts: [{ text: userQuery }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-          };
-    
-          const apiKey = "";
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-    
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-    
-          if (!response.ok) {
-            throw new Error('API request failed.');
-          }
-    
-          const result = await response.json();
-          const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-          if (generatedText) {
-            setPrompts(prev => ({ ...prev, lifestyle: generatedText }));
-            setShowLifestyleForm(false);
-          } else {
-            throw new Error('Failed to generate prompt.');
-          }
-        } catch (e) {
-          setError(`An error occurred while generating the prompt: ${e.message}`);
-        } finally {
-          setLoadingState('IDLE');
-        }
-      };
-    
-      // Helper function to convert a URL to a Base64 string
-      const urlToBase64 = async (url) => {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            resolve(reader.result);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-      };
-    
-      // Handles the final image generation call to the API
-      const handleGenerateImage = async () => {
-        if (!selectedPrompt || !prompts[selectedPrompt]) {
-          setError('Please select a prompt.');
-          return;
-        }
-    
-        setError(null);
-        setLoadingState('UPLOADING_IMAGES');
-    
-        try {
-          const selectedImageUrls = Object.values(selectedImages);
-          const base64Images = await Promise.all(selectedImageUrls.map(urlToBase64));
-          
-          setLoadingState('GENERATING_IMAGE');
-    
-          const payload = {
-            contents: [{
-              parts: [
-                { text: prompts[selectedPrompt] },
-                ...base64Images.map(base64Str => ({
-                  inlineData: {
-                    mimeType: "image/jpeg", // Assuming JPEG, can be detected from headers if needed
-                    data: base64Str.split(',')[1]
-                  }
-                }))
-              ]
-            }],
-            generationConfig: {
-              responseModalities: ["TEXT", "IMAGE"]
-            }
-          };
-          
-          const apiKey = "";
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-          
-          const response = await fetch(apiUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-          });
-    
-          if (!response.ok) {
-            throw new Error('Image generation service is not responding.');
-          }
-    
-          const result = await response.json();
-          
-          const generatedImagePart = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-    
-          if (generatedImagePart && generatedImagePart.inlineData.data) {
-              const base64Data = generatedImagePart.inlineData.data;
-              setGeneratedImage(`data:image/png;base64,${base64Data}`);
-              setCurrentStep(4);
-          } else {
-              throw new Error('Failed to retrieve image data.');
-          }
-    
-        } catch (e) {
-            setError(`An error occurred while generating the image: ${e.message}`);
-        } finally {
-          setLoadingState('IDLE');
-        }
-      };
-    
-      const handleDownloadImage = () => {
-        if (generatedImage) {
-          const link = document.createElement('a');
-          link.href = generatedImage;
-          link.download = 'ounass-look.png';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      };
-    
-      // Resets the application to the first step
-      const resetApp = () => {
-        setSkus(['', '']);
-        setProductImages({});
-        setSelectedImages({});
-        setPrompts({ studio: '', lifestyle: '' });
-        setGeneratedImage(null);
-        setError(null);
-        setCurrentStep(1);
-        setShowLifestyleForm(false);
-        setLifestyleInputs({ location: '', mood: '', time: '', extra: '' });
-      };
-      
-      // New function to go back to the prompts screen
-      const backToPrompts = () => {
-        setError(null);
-        setCurrentStep(3);
-      };
-    
-      // Renders a single step of the process
-      const renderStep = () => {
-        switch (currentStep) {
-          case 1:
-            return (
-              <div className="flex flex-col space-y-4">
-                <h2 className="text-xl font-semibold mb-2">1. Enter SKUs (Min 2, Max 5)</h2>
-                {skus.map((sku, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      placeholder={`SKU ${index + 1}`}
-                      value={sku}
-                      onChange={(e) => {
-                        const newSkus = [...skus];
-                        newSkus[index] = e.target.value;
-                        setSkus(newSkus);
-                      }}
-                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {skus.length > 2 && (
-                      <button
-                        onClick={() => setSkus(skus.filter((_, i) => i !== index))}
-                        className="p-2 text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <div className="flex justify-end space-x-2 mt-4">
-                  {skus.length < 5 && (
-                    <button
-                      onClick={() => setSkus([...skus, ''])}
-                      className="p-2 text-blue-500 hover:text-blue-700 transition-colors"
-                    >
-                      Add SKU
-                    </button>
-                  )}
-                  <button
-                    onClick={fetchImages}
-                    disabled={skus.filter(s => s).length < 2 || loadingState !== 'IDLE'}
-                    className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {loadingState === 'FETCHING_IMAGES' ? 'Loading...' : 'Fetch Images'}
-                  </button>
+    <!-- Ana Konteyner -->
+    <div class="container mx-auto p-8 bg-white rounded-lg shadow-xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">AI Fotoğraf Stüdyosu</h1>
+        <p class="text-center text-gray-600 mb-8">Ürününüzün fotoğrafını yükleyin ve yapay zeka tarafından oluşturulan çarpıcı bir sahneye yerleştirin.</p>
+
+        <!-- Yükleme Alanı -->
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-6">
+            <label for="file-upload" class="cursor-pointer">
+                <div class="flex flex-col items-center justify-center">
+                    <svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 16a4 4 0 01-4-4v-1a4 4 0 014-4h12a4 4 0 014 4v1a4 4 0 01-4 4H7z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m-4-4h8">
+                        </path>
+                    </svg>
+                    <p class="text-sm text-gray-500">Fotoğraf yüklemek için buraya tıklayın veya sürükleyip bırakın</p>
+                    <p class="text-xs text-gray-400 mt-1">Sadece .jpg veya .png dosyaları kabul edilir.</p>
                 </div>
-              </div>
-            );
-          case 2:
-            return (
-              <div className="flex flex-col space-y-6">
-                <h2 className="text-xl font-semibold mb-2">2. Select Images</h2>
-                {Object.keys(productImages).map(sku => (
-                  <div key={sku} className="border-b pb-4">
-                    <h3 className="text-lg font-medium mb-2">SKU: {sku}</h3>
-                    <div className="flex flex-wrap gap-4 justify-center">
-                      {productImages[sku].srcs.map((src, index) => (
-                        <div
-                          key={index}
-                          className={`relative w-36 h-36 rounded-lg cursor-pointer overflow-hidden transition-all ${selectedImages[sku] === src ? 'ring-4 ring-blue-500 scale-105' : 'ring-2 ring-transparent hover:ring-blue-300'}`}
-                          onClick={() => setSelectedImages(prev => ({ ...prev, [sku]: src }))}
-                        >
-                          <img src={src} alt={`SKU ${sku} - Image ${index + 1}`} className="w-full h-full object-cover" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                <div className="flex justify-end mt-4">
-                  <button
-                    onClick={generatePrompts}
-                    disabled={Object.keys(selectedImages).length !== Object.keys(productImages).length}
-                    className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    Generate Prompts
-                  </button>
-                </div>
-              </div>
-            );
-          case 3:
-            return (
-              <div className="flex flex-col space-y-6">
-                <h2 className="text-xl font-semibold mb-2">3. Select a Prompt and Generate Image</h2>
-                <div className="flex flex-wrap gap-6 mb-8 p-4 bg-gray-100 rounded-xl">
-                  {Object.keys(selectedImages).map(sku => (
-                    <div key={sku} className="flex-1 min-w-[200px] bg-white p-4 rounded-lg shadow-md flex flex-col items-center text-center">
-                      <img src={selectedImages[sku]} alt={`Selected Product ${sku}`} className="w-24 h-24 object-contain mb-2 rounded-md" />
-                      <p className="text-sm font-semibold mb-1">Product: {productImages[sku].name}</p>
-                      <p className="text-xs text-gray-600">Brand: {productImages[sku].brand}</p>
-                      <p className="text-xs text-gray-600">Category: {productImages[sku].category}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-col space-y-4">
-                  <div>
-                    <label className="flex items-center justify-between cursor-pointer">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="prompt"
-                          value="studio"
-                          checked={selectedPrompt === 'studio'}
-                          onChange={(e) => { setSelectedPrompt(e.target.value); setShowLifestyleForm(false); }}
-                          className="form-radio text-blue-600"
-                        />
-                        <span className="font-medium text-lg">Studio Shoot Prompt:</span>
-                      </div>
-                      <button onClick={() => refreshPrompt('studio')} className="text-sm p-1 px-3 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
-                        Refresh
-                      </button>
-                    </label>
-                    <textarea
-                      value={prompts.studio}
-                      onChange={(e) => setPrompts(prev => ({ ...prev, studio: e.target.value }))}
-                      className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Edit the prompt here..."
-                    />
-                  </div>
-                  <div>
-                    <label className="flex items-center justify-between cursor-pointer">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="prompt"
-                          value="lifestyle"
-                          checked={selectedPrompt === 'lifestyle'}
-                          onChange={(e) => setSelectedPrompt(e.target.value)}
-                          className="form-radio text-blue-600"
-                        />
-                        <span className="font-medium text-lg">Lifestyle Shoot Prompt:</span>
-                      </div>
-                      {!showLifestyleForm && (
-                        <button
-                          onClick={() => setShowLifestyleForm(true)}
-                          className="text-sm p-1 px-3 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
-                        >
-                          Generate Prompt
-                        </button>
-                      )}
-                    </label>
-                    {showLifestyleForm ? (
-                      <div className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full">
-                        <div className="flex flex-col space-y-2 mb-4">
-                          <input
-                            type="text"
-                            placeholder="Location (e.g., 'a bustling city street')"
-                            value={lifestyleInputs.location}
-                            onChange={(e) => setLifestyleInputs(prev => ({ ...prev, location: e.target.value }))}
-                            className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Mood (e.g., 'energetic and vibrant')"
-                            value={lifestyleInputs.mood}
-                            onChange={(e) => setLifestyleInputs(prev => ({ ...prev, mood: e.target.value }))}
-                            className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Time of Day (e.g., 'golden hour at sunset')"
-                            value={lifestyleInputs.time}
-                            onChange={(e) => setLifestyleInputs(prev => ({ ...prev, time: e.target.value }))}
-                            className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                          <textarea
-                            placeholder="Extra details? (e.g., 'rainy weather, with an umbrella')"
-                            value={lifestyleInputs.extra}
-                            onChange={(e) => setLifestyleInputs(prev => ({ ...prev, extra: e.target.value }))}
-                            className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-20"
-                          />
-                        </div>
-                        <button
-                          onClick={generateLifestylePrompt}
-                          className="w-full p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
-                        >
-                          Generate Prompt
-                        </button>
-                      </div>
-                    ) : (
-                      <textarea
-                        value={prompts.lifestyle}
-                        onChange={(e) => setPrompts(prev => ({ ...prev, lifestyle: e.target.value }))}
-                        className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Edit the prompt here..."
-                      />
-                    )}
-                  </div>
-                </div>
-                <div className="flex justify-end items-center mt-4">
-                  <button
-                    onClick={handleGenerateImage}
-                    disabled={loadingState !== 'IDLE'}
-                    className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {loadingState === 'IDLE' ? 'Continue' : 'Generating...'}
-                  </button>
-                </div>
-              </div>
-            );
-          case 4:
-            return (
-              <div className="flex flex-col items-center space-y-4">
-                <h2 className="text-xl font-semibold mb-2">4. Generated Image</h2>
-                {generatedImage ? (
-                  <img src={generatedImage} alt="Generated Outfit" className="rounded-lg shadow-lg max-w-full h-auto" />
-                ) : (
-                  <div className="w-80 h-80 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-500">Image failed to load</span>
-                  </div>
-                )}
-                <div className="flex space-x-4 mt-6">
-                  <button
-                    onClick={handleDownloadImage}
-                    className="p-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition-all"
-                  >
-                    Download
-                  </button>
-                  <button
-                    onClick={backToPrompts}
-                    className="p-3 bg-gray-600 text-white rounded-lg shadow-md hover:bg-gray-700 transition-all"
-                  >
-                    Back to Prompts
-                  </button>
-                  <button
-                    onClick={resetApp}
-                    className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all"
-                  >
-                    Start Over
-                  </button>
-                </div>
-              </div>
-            );
-          default:
-            return null;
-        }
-      };
-    
-      const getLoadingMessage = () => {
-        switch (loadingState) {
-          case 'FETCHING_IMAGES':
-            return 'Fetching images from Ounass...';
-          case 'GENERATING_PROMPTS':
-            return 'Generating AI prompts...';
-          case 'UPLOADING_IMAGES':
-            return 'Preparing images for AI...';
-          case 'GENERATING_IMAGE':
-            return 'Generating image, this may take a moment...';
-          default:
-            return 'Please wait...';
-        }
-      };
-    
-      return (
-        <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center font-sans">
-          <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8 transform transition-all duration-300 ease-in-out hover:scale-[1.01] border-4 border-white">
-            <div className="flex flex-col items-center text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">Outfit Generator</h1>
-              <p className="text-gray-500">Create custom outfits from SKUs for personal shopping.</p>
-            </div>
-    
-            {error && (
-              <div className="p-4 mb-6 text-sm text-red-700 bg-red-100 rounded-lg text-center font-medium">
-                {error}
-              </div>
-            )}
-    
-            {loadingState !== 'IDLE' && (
-              <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50 p-4">
-                <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-lg">
-                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-                  <p className="mt-4 text-gray-600 font-semibold">{getLoadingMessage()}</p>
-                  {Object.keys(selectedImages).length > 0 && (
-                    <div className="flex flex-wrap gap-4 mt-6">
-                      {Object.values(selectedImages).map((src, index) => (
-                        <img key={index} src={src} alt="Selected item" className="w-16 h-16 object-cover rounded-md shadow" />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {renderStep()}
-          </div>
+            </label>
+            <input id="file-upload" type="file" class="hidden" accept=".jpg,.jpeg,.png">
         </div>
-      );
-    };
-    
-    // Render the App component to the root element
-    ReactDOM.render(<App />, document.getElementById('root'));
-    
-  </script>
+
+        <!-- Yüklenen Görüntü Önizlemesi -->
+        <div id="image-preview" class="hidden mb-6">
+            <h3 class="text-xl font-semibold mb-2 text-center text-gray-700">Yüklenen Ürün</h3>
+            <img id="uploaded-image" src="#" alt="Yüklenen ürün önizlemesi"
+                class="mx-auto rounded-lg shadow-md max-w-full h-auto" />
+        </div>
+
+        <!-- AI Ayarları -->
+        <div class="space-y-4 mb-8">
+            <label class="block">
+                <span class="text-gray-700 font-medium">Ürün Açıklaması</span>
+                <input id="product-description" type="text"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2"
+                    placeholder="Örn: parlak kırmızı spor ayakkabı">
+            </label>
+            <label class="block">
+                <span class="text-gray-700 font-medium">İstediğiniz Stil</span>
+                <input id="style-input" type="text"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2"
+                    placeholder="Örn: şehir sokaklarında neon ışıklı fütüristik sahne">
+            </label>
+        </div>
+
+        <!-- İşlem Düğmeleri -->
+        <div class="flex justify-center space-x-4">
+            <button id="generate-btn"
+                class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                Oluştur
+            </button>
+            <button id="clear-btn"
+                class="px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg shadow-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                Temizle
+            </button>
+        </div>
+
+        <!-- Yükleme Durumu ve Mesajlar -->
+        <div id="status-message" class="mt-8 text-center text-gray-600 hidden">
+            <p>Görsel oluşturuluyor, lütfen bekleyin...</p>
+        </div>
+        <div id="error-message" class="mt-8 text-center text-red-500 hidden">
+            <p>Bir hata oluştu. Lütfen tekrar deneyin.</p>
+        </div>
+
+        <!-- Sonuç Alanı -->
+        <div id="result-container" class="hidden mt-8">
+            <h3 class="text-xl font-semibold text-center mb-4 text-gray-700">Oluşturulan Görsel</h3>
+            <img id="generated-image" src="#" alt="Yapay zeka tarafından oluşturulan görsel"
+                class="mx-auto rounded-lg shadow-xl max-w-full h-auto" />
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileUpload = document.getElementById('file-upload');
+            const imagePreviewContainer = document.getElementById('image-preview');
+            const uploadedImage = document.getElementById('uploaded-image');
+            const productDescription = document.getElementById('product-description');
+            const styleInput = document.getElementById('style-input');
+            const generateBtn = document.getElementById('generate-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const statusMessage = document.getElementById('status-message');
+            const errorMessage = document.getElementById('error-message');
+            const resultContainer = document.getElementById('result-container');
+            const generatedImage = document.getElementById('generated-image');
+
+            let uploadedFile = null;
+
+            // Vercel ortam değişkenini kullanmak için API anahtarını güncellendi.
+            const apiKey = process.env.API_KEY || ""; 
+
+            fileUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    uploadedFile = file;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        uploadedImage.src = e.target.result;
+                        imagePreviewContainer.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            generateBtn.addEventListener('click', async () => {
+                if (!uploadedFile) {
+                    alert('Lütfen bir ürün fotoğrafı yükleyin.');
+                    return;
+                }
+
+                statusMessage.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                resultContainer.classList.add('hidden');
+                generatedImage.src = '';
+
+                try {
+                    const base64ImageData = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.readAsDataURL(uploadedFile);
+                    });
+
+                    // Metin prompt'u için API çağrısı
+                    const textPrompt = `A high-quality image of ${productDescription.value || 'a product'} with the style of '${styleInput.value || 'a professional studio setting'}'.`;
+
+                    const promptPayload = {
+                        contents: [{
+                            parts: [{
+                                text: textPrompt
+                            }]
+                        }],
+                        generationConfig: {
+                            responseModalities: ['TEXT', 'IMAGE']
+                        }
+                    };
+
+                    const promptUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+                    let retries = 0;
+                    const maxRetries = 5;
+
+                    const fetchPrompt = async () => {
+                        try {
+                            const response = await fetch(promptUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(promptPayload)
+                            });
+
+                            if (!response.ok) {
+                                throw new Error(`API hatası: ${response.statusText}`);
+                            }
+
+                            const result = await response.json();
+                            const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                            if (base64Data) {
+                                const imageUrl = `data:image/png;base64,${base64Data}`;
+                                generatedImage.src = imageUrl;
+                                resultContainer.classList.remove('hidden');
+                            } else {
+                                throw new Error('API yanıtından görüntü verisi alınamadı.');
+                            }
+                        } catch (error) {
+                            if (retries < maxRetries) {
+                                retries++;
+                                const delay = Math.pow(2, retries) * 1000;
+                                console.log(`İstek başarısız, tekrar denemeden önce ${delay / 1000} saniye bekleniyor...`);
+                                await new Promise(res => setTimeout(res, delay));
+                                await fetchPrompt();
+                            } else {
+                                throw error;
+                            }
+                        }
+                    };
+
+                    await fetchPrompt();
+
+                } catch (error) {
+                    console.error('API çağrısı sırasında bir hata oluştu:', error);
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    statusMessage.classList.add('hidden');
+                }
+            });
+
+            clearBtn.addEventListener('click', () => {
+                fileUpload.value = '';
+                uploadedFile = null;
+                imagePreviewContainer.classList.add('hidden');
+                productDescription.value = '';
+                styleInput.value = '';
+                resultContainer.classList.add('hidden');
+                generatedImage.src = '';
+                statusMessage.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+            });
+        });
+    </script>
 </body>
+
 </html>
