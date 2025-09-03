@@ -12,6 +12,9 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Vercel Analytics -->
+  <script defer src="https://unpkg.com/@vercel/analytics@1.1.1/dist/index.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; }
     input:focus, button:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
@@ -60,6 +63,11 @@
       const fetchImages = async () => {
         setError(null);
         setLoadingState('FETCHING_IMAGES');
+        
+        // Analytics: Track image fetch start
+        window.va?.track('fetch_images_started', {
+          sku_count: skus.filter(s => s).length
+        });
         const validSkus = skus.filter(s => s);
         
         if (validSkus.length < 2) {
@@ -238,6 +246,12 @@
           setError(null);
           setCurrentStep(2); // Go to step 2 for image selection
           console.log(`[Success] Proceeding to step 2 with ${sortedImages.length} successful SKUs`);
+          
+          // Analytics: Track successful image fetch
+          window.va?.track('fetch_images_success', {
+            successful_skus: sortedImages.length,
+            total_time_ms: totalTime
+          });
         } else if (sortedImages.length > 0) {
           // Some SKUs succeeded but not enough, show partial success message
           setError(`Only ${sortedImages.length} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
@@ -350,6 +364,16 @@ FINAL INSTRUCTION:
 Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
             setPrompts(prev => ({ ...prev, lifestyle: finalPrompt }));
             setShowLifestyleForm(false);
+            
+            // Analytics: Track lifestyle prompt generation
+            window.va?.track('prompt_generated', {
+              prompt_type: 'lifestyle',
+              product_count: productDetails.length,
+              location: lifestyleInputs.location,
+              mood: lifestyleInputs.mood,
+              time: lifestyleInputs.time,
+              has_extra_details: !!lifestyleInputs.extra
+            });
           } else {
             // Construct the DYNAMIC studio prompt with AGGRESSIVE product preservation
             finalPrompt = `A photorealistic full-body studio photograph of a model.
@@ -369,6 +393,12 @@ FINAL INSTRUCTION:
 Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
             setPrompts({ studio: finalPrompt, lifestyle: '' });
             setCurrentStep(3);
+            
+            // Analytics: Track prompt generation
+            window.va?.track('prompt_generated', {
+              prompt_type: 'studio',
+              product_count: productDetails.length
+            });
           }
         } catch(e) {
             setError('Failed to construct prompts.');
@@ -481,6 +511,14 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             const endTime = performance.now();
             console.log(`[Timing] Image generation completed in ${Math.round(endTime - startTime)}ms`);
             console.log(`[Timing] Breakdown: Base64 conversion: ${Math.round(base64EndTime - base64StartTime)}ms, API call: ${Math.round(apiEndTime - apiStartTime)}ms`);
+            
+            // Analytics: Track successful image generation
+            window.va?.track('image_generated', {
+              prompt_type: selectedPrompt,
+              product_count: selectedImageUrls.length,
+              generation_time_ms: Math.round(endTime - startTime),
+              api_time_ms: Math.round(apiEndTime - apiStartTime)
+            });
           } else {
             throw new Error(result.error || 'Failed to generate image');
           }
@@ -502,6 +540,12 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+          
+          // Analytics: Track image download
+          window.va?.track('image_downloaded', {
+            prompt_type: selectedPrompt,
+            file_name: 'ounass-look.png'
+          });
         }
       };
     
@@ -792,8 +836,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.8.4 */}
-              <p className="text-xs text-gray-300 mt-1">v1.8.4</p>
+              {/* Force refresh for v1.9.0 */}
+              <p className="text-xs text-gray-300 mt-1">v1.9.0</p>
             </div>
     
             {error && (
@@ -866,6 +910,13 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
     // Render the App component to the root element
     ReactDOM.render(<App />, document.getElementById('root'));
     
+  </script>
+  
+  <!-- Initialize Vercel Analytics -->
+  <script>
+    // Vercel Analytics will automatically track page views
+    // Custom events can be tracked using: window.va?.track('event_name', { properties })
+    console.log('[Analytics] Vercel Web Analytics loaded');
   </script>
 </body>
 </html>

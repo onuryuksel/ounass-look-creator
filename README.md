@@ -62,6 +62,8 @@ npm run version:patch      # Bump patch version
 - ✅ High-resolution image generation
 - ✅ Product preservation technology
 - ✅ Download functionality
+- ✅ Vercel Web Analytics integration
+- ✅ Custom event tracking for user behavior
 
 ## 🔧 Environment Variables
 
@@ -73,6 +75,7 @@ OunassLookCreator=your_google_ai_studio_api_key
 
 ## 📈 Version History
 
+- **v1.9.0**: Integrated Vercel Web Analytics with custom event tracking
 - **v1.8.4**: API key updated to match Vercel environment (OunassLookCreator)
 - **v1.8.3**: Fixed Vercel static site build configuration
 - **v1.8.2**: API key renamed to OUNASS_LOOK_CREATOR_API_KEY
@@ -94,6 +97,27 @@ OunassLookCreator=your_google_ai_studio_api_key
 
 - `/api/gemini-image` - Image generation (60s timeout)
 - `/api/gemini-text` - Text enhancement (30s timeout)
+
+## 📊 Analytics
+
+Vercel Web Analytics is integrated to track:
+
+**Automatic Tracking:**
+- Page views and visitor metrics
+- Performance data and loading times
+
+**Custom Events:**
+- `fetch_images_started` - When user starts fetching product images
+- `fetch_images_success` - When images are successfully loaded
+- `prompt_generated` - When studio/lifestyle prompts are created
+- `image_generated` - When AI successfully generates outfit image
+- `image_downloaded` - When user downloads the generated image
+
+**Data Available:**
+- User journey flow (SKU input → Image selection → Prompt creation → Generation → Download)
+- Performance metrics (API response times, image generation speed)
+- Feature usage (Studio vs Lifestyle preference, product count patterns)
+- Error tracking and conversion funnel analysis
 
 ---
 
