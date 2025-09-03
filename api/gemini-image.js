@@ -92,20 +92,41 @@ export default async function handler(req, res) {
     const result = await response.json();
     console.log(`Model ${model} success response:`, JSON.stringify(result, null, 2));
     
-    const generatedImagePart = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-
-    if (generatedImagePart && generatedImagePart.inlineData.data) {
-      const base64Data = generatedImagePart.inlineData.data;
-      console.log(`Image generated successfully with model ${model}`);
-      // Return the final prompt along with the image for debugging transparency
-      return res.json({ 
-        success: true, 
-        image: `data:image/png;base64,${base64Data}`,
-        debug: { finalPrompt } 
-      });
+    // Check if this is a text-only request (no images provided)
+    const isTextOnlyRequest = !images || images.length === 0;
+    
+    if (isTextOnlyRequest) {
+      // Handle text-only response (for art director enhancement)
+      const textPart = result?.candidates?.[0]?.content?.parts?.find(p => p.text);
+      
+      if (textPart && textPart.text) {
+        console.log(`Text generated successfully with model ${model}`);
+        return res.json({ 
+          success: true, 
+          text: textPart.text,
+          debug: { finalPrompt } 
+        });
+      } else {
+        console.log(`No text data found in response from model ${model}`);
+        throw new Error(`No text data in response from ${model}`);
+      }
     } else {
-      console.log(`No image data found in response from model ${model}`);
-      throw new Error(`No image data in response from ${model}`);
+      // Handle image generation response (existing logic)
+      const generatedImagePart = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+
+      if (generatedImagePart && generatedImagePart.inlineData.data) {
+        const base64Data = generatedImagePart.inlineData.data;
+        console.log(`Image generated successfully with model ${model}`);
+        // Return the final prompt along with the image for debugging transparency
+        return res.json({ 
+          success: true, 
+          image: `data:image/png;base64,${base64Data}`,
+          debug: { finalPrompt } 
+        });
+      } else {
+        console.log(`No image data found in response from model ${model}`);
+        throw new Error(`No image data in response from ${model}`);
+      }
     }
 
   } catch (error) {

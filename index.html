@@ -249,6 +249,62 @@
         }
       };
     
+      // AI Art Director function to enhance scene descriptions
+      const enhanceSceneWithArtDirector = async (location, mood, time, extra) => {
+        try {
+          const artDirectorPrompt = `You are the world's best fashion photography art director. Transform the following basic scene inputs into a professional, detailed photography scene description.
+
+INPUT DETAILS:
+- Location: ${location}
+- Mood: ${mood}  
+- Time/Lighting: ${time}
+- Additional details: ${extra || 'None'}
+
+TASK: Create a detailed, professional scene description that includes:
+1. Specific lighting setup and quality
+2. Detailed location description and atmosphere
+3. Camera angle and composition suggestions
+4. Environmental details that enhance the mood
+5. Professional photography terminology
+
+REQUIREMENTS:
+- Keep it concise but professional (2-3 sentences max)
+- Focus on visual and atmospheric elements
+- Use professional photography language
+- Make it suitable for AI image generation
+
+OUTPUT FORMAT: Only return the enhanced scene description, nothing else.`;
+
+          const response = await fetch('/api/gemini-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: artDirectorPrompt,
+              images: [] // No images needed for text generation
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Art director enhancement failed');
+          }
+
+          const result = await response.json();
+          
+          if (result.success && result.text) {
+            // Successfully got enhanced description from AI Art Director
+            return result.text.trim();
+          } else {
+            // Fallback if AI enhancement failed
+            throw new Error(result.error || 'No text in response');
+          }
+          
+        } catch (error) {
+          console.error('Art director enhancement failed:', error);
+          // Fallback to original format if AI enhancement fails
+          return `Location: '${location}' with a '${mood}' mood. Lighting: '${time}'. Additional details: ${extra || ''}`;
+        }
+      };
+
       // Generates prompts. This is now the single source of truth for prompt creation.
       const generatePrompts = async (isLifestyle = false) => {
         setLoadingState('GENERATING_PROMPTS');
@@ -269,7 +325,17 @@
 
           let finalPrompt = '';
           if (isLifestyle) {
-            // Construct the DYNAMIC lifestyle prompt with AGGRESSIVE product preservation
+            // Enhance scene description using AI Art Director
+            console.log('[Art Director] Enhancing scene description...');
+            const enhancedSceneDescription = await enhanceSceneWithArtDirector(
+              lifestyleInputs.location,
+              lifestyleInputs.mood,
+              lifestyleInputs.time,
+              lifestyleInputs.extra
+            );
+            console.log('[Art Director] Enhanced scene:', enhancedSceneDescription);
+
+            // Construct the DYNAMIC lifestyle prompt with AI-enhanced scene
             finalPrompt = `A photorealistic lifestyle photograph of a fashion model. 
 
 CRITICAL REQUIREMENT - PRODUCT PRESERVATION:
@@ -279,9 +345,7 @@ PRODUCT SPECIFICATIONS:
 ${productSpecifications}
 
 SCENE SETTING:
-Location: '${lifestyleInputs.location}' with a '${lifestyleInputs.mood}' mood.
-Lighting: '${lifestyleInputs.time}'.
-Additional details: ${lifestyleInputs.extra || ''}
+${enhancedSceneDescription}
 
 FINAL INSTRUCTION:
 Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
@@ -729,8 +793,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.7.2 */}
-              <p className="text-xs text-gray-300 mt-1">v1.7.2</p>
+              {/* Force refresh for v1.8.0 */}
+              <p className="text-xs text-gray-300 mt-1">v1.8.0</p>
             </div>
     
             {error && (
