@@ -2,6 +2,9 @@
   "functions": {
     "api/gemini-image.js": {
       "maxDuration": 60
+    },
+    "api/gemini-text.js": {
+      "maxDuration": 30
     }
   },
   "routes": [

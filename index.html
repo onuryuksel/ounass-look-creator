@@ -275,12 +275,11 @@ REQUIREMENTS:
 
 OUTPUT FORMAT: Only return the enhanced scene description, nothing else.`;
 
-          const response = await fetch('/api/gemini-image', {
+          const response = await fetch('/api/gemini-text', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              prompt: artDirectorPrompt,
-              images: [] // No images needed for text generation
+              prompt: artDirectorPrompt
             })
           });
 
@@ -793,8 +792,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.8.0 */}
-              <p className="text-xs text-gray-300 mt-1">v1.8.0</p>
+              {/* Force refresh for v1.8.1 */}
+              <p className="text-xs text-gray-300 mt-1">v1.8.1</p>
             </div>
     
             {error && (

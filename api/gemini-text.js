@@ -13,38 +13,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt, images } = req.body;
+    const { prompt } = req.body;
     
-    // --- CRITICAL RULE INJECTION ---
-    const finalPrompt = `${prompt}. IMPORTANT: The products in the images provided MUST be used exactly as they are. Do not alter, modify, or replace any product details, shapes, or colors. Replicate them perfectly in the final image.`;
-    // --- END CRITICAL RULE INJECTION ---
-
-    console.log('--- RECEIVED IMAGE GENERATION REQUEST ---');
-    console.log('Original Prompt:', prompt);
-    console.log('Final Injected Prompt:', finalPrompt);
-    console.log('IMAGE COUNT:', images?.length);
+    console.log('--- RECEIVED TEXT GENERATION REQUEST ---');
+    console.log('Prompt:', prompt);
     console.log('-----------------------------------------');
-    
-    console.log('Image generation request received:', {
-      promptLength: prompt?.length,
-      imageCount: images?.length,
-      firstImagePreview: images?.[0]?.substring(0, 50) + '...'
-    });
     
     const payload = {
       contents: [{
         parts: [
-          { text: finalPrompt }, // Use the modified prompt
-          ...images.map(base64Str => ({
-            inlineData: {
-              mimeType: "image/jpeg",
-              data: base64Str.split(',')[1]
-            }
-          }))
+          { text: prompt }
         ]
       }],
       generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"]
+        responseModalities: ["TEXT"]
       }
     };
     
@@ -53,10 +35,10 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API key not configured' });
     }
     
-    // Use only gemini-2.5-flash-image-preview model
-    const model = 'gemini-2.5-flash-image-preview';
+    // Use gemini-1.5-flash for text generation (faster and more cost-effective)
+    const model = 'gemini-1.5-flash';
     
-    console.log(`Using model: ${model}`);
+    console.log(`Using model: ${model} for text generation`);
     
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     
@@ -92,20 +74,18 @@ export default async function handler(req, res) {
     const result = await response.json();
     console.log(`Model ${model} success response:`, JSON.stringify(result, null, 2));
     
-    const generatedImagePart = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-
-    if (generatedImagePart && generatedImagePart.inlineData.data) {
-      const base64Data = generatedImagePart.inlineData.data;
-      console.log(`Image generated successfully with model ${model}`);
-      // Return the final prompt along with the image for debugging transparency
+    const textPart = result?.candidates?.[0]?.content?.parts?.find(p => p.text);
+    
+    if (textPart && textPart.text) {
+      console.log(`Text generated successfully with model ${model}`);
       return res.json({ 
         success: true, 
-        image: `data:image/png;base64,${base64Data}`,
-        debug: { finalPrompt } 
+        text: textPart.text,
+        debug: { prompt } 
       });
     } else {
-      console.log(`No image data found in response from model ${model}`);
-      throw new Error(`No image data in response from ${model}`);
+      console.log(`No text data found in response from model ${model}`);
+      throw new Error(`No text data in response from ${model}`);
     }
 
   } catch (error) {
