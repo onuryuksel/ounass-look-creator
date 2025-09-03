@@ -156,10 +156,19 @@
               const brand = content.analytics?.brand || 'Unknown Brand';
               const name = content.analytics?.name || 'Unknown Product';
               
-              // Build detailed category: class/subClass format
-              const productClass = content.analytics?.class || content.analytics?.department || 'Unknown';
+              // Build detailed category: department/class/subClass format
+              const department = content.analytics?.department || 'Unknown';
+              const productClass = content.analytics?.class || '';
               const subClass = content.analytics?.subClass || content.analytics?.subclass || '';
-              const category = subClass ? `${productClass}/${subClass}` : productClass;
+              
+              // Build hierarchical category string
+              let category = department;
+              if (productClass) {
+                category += `/${productClass}`;
+                if (subClass) {
+                  category += `/${subClass}`;
+                }
+              }
               
               return {
                 sku,
@@ -720,8 +729,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.7.1 */}
-              <p className="text-xs text-gray-300 mt-1">v1.7.1</p>
+              {/* Force refresh for v1.7.2 */}
+              <p className="text-xs text-gray-300 mt-1">v1.7.2</p>
             </div>
     
             {error && (
