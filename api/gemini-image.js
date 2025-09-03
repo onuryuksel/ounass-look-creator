@@ -48,9 +48,9 @@ export default async function handler(req, res) {
       }
     };
     
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OUNASS_LOOK_CREATOR_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: 'API key not configured' });
+      return res.status(500).json({ error: 'OunassLookCreator API key not configured' });
     }
     
     // Use only gemini-2.5-flash-image-preview model
