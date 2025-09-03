@@ -48,7 +48,7 @@ export default async function handler(req, res) {
       }
     };
     
-    const apiKey = process.env.OUNASS_LOOK_CREATOR_API_KEY;
+    const apiKey = process.env.OunassLookCreator;
     if (!apiKey) {
       return res.status(500).json({ error: 'OunassLookCreator API key not configured' });
     }

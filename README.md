@@ -68,11 +68,13 @@ npm run version:patch      # Bump patch version
 Set these in Vercel dashboard for both environments:
 
 ```
-OUNASS_LOOK_CREATOR_API_KEY=your_google_ai_studio_api_key
+OunassLookCreator=your_google_ai_studio_api_key
 ```
 
 ## 📈 Version History
 
+- **v1.8.4**: API key updated to match Vercel environment (OunassLookCreator)
+- **v1.8.3**: Fixed Vercel static site build configuration
 - **v1.8.2**: API key renamed to OUNASS_LOOK_CREATOR_API_KEY
 - **v1.8.1**: Separated text/image API endpoints
 - **v1.7.2**: Enhanced category hierarchy (department/class/subClass)
