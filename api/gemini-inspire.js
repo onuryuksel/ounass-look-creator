@@ -61,15 +61,12 @@ INSPIRATION EXAMPLES FOR REFERENCE:
 - Elegant evening wear → "Private terrace at Hotel George V overlooking Champs-Élysées in Paris"
 - Sporty chic → "Modern rooftop gym in Tokyo's Shibuya district with city skyline views"
 
-OUTPUT FORMAT: Return EXACTLY in this JSON format:
-{
-  "location": "your specific answer to question 1",
-  "mood": "your specific answer to question 2", 
-  "time": "your specific answer to question 3",
-  "extra": "your specific answer to question 4"
-}
+Answer these 4 questions clearly and in detail based on the products shown:
 
-Answer these 4 questions based on the products shown:`;
+1. LOCATION: [Your detailed answer about where]
+2. MOOD: [Your detailed answer about the atmosphere] 
+3. TIME: [Your detailed answer about when]
+4. EXTRA: [Your detailed answer about additional details]`;
 
     const payload = {
       contents: [{
@@ -121,15 +118,23 @@ Answer these 4 questions based on the products shown:`;
       const textPart = result.candidates[0].content.parts[0];
       
       console.log('--- PRODUCT-AWARE INSPIRATION SUCCESS ---');
-      console.log('Generated inspiration text:', textPart.text);
+      console.log('Generated inspiration text (length:', textPart.text?.length, '):', textPart.text);
+      console.log('Text complete?', textPart.text?.includes('}'));
       console.log('---------------------------------------');
+      
+      // Check if response is truncated
+      if (!textPart.text?.includes('}')) {
+        console.warn('⚠️ WARNING: Response appears to be truncated - missing closing brace');
+      }
       
       return res.json({ 
         success: true, 
         text: textPart.text,
         debug: { 
           imageCount: images?.length,
-          model: model
+          model: model,
+          textLength: textPart.text?.length,
+          isComplete: textPart.text?.includes('}')
         }
       });
     } else {

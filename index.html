@@ -328,41 +328,39 @@
           const result = await response.json();
           
           if (result.success && result.text) {
-            try {
-              // Try to parse as JSON first
-              const inspirationData = JSON.parse(result.text.trim());
-              
-              // Validate the structure
-              if (inspirationData.location && inspirationData.mood && inspirationData.time && inspirationData.extra) {
-                setLifestyleInputs({
-                  location: inspirationData.location,
-                  mood: inspirationData.mood,
-                  time: inspirationData.time,
-                  extra: inspirationData.extra
-                });
-                console.log('[Product-Aware Inspiration] ✨ Generated for products:', inspirationData);
-                return;
-              }
-            } catch (parseError) {
-              console.warn('[Product-Aware Inspiration] JSON parse failed, trying text extraction');
-            }
-            
-            // Fallback: Extract from text if JSON parsing fails
+            // Simple text extraction - no JSON parsing needed
             const text = result.text;
-            const extractValue = (pattern) => {
-              const match = text.match(pattern);
-              return match ? match[1].trim().replace(/['"]/g, '') : '';
+            console.log('[Product-Aware Inspiration] Raw AI response:', text);
+            
+            const extractAnswer = (questionNumber, label) => {
+              // Look for pattern: "1. LOCATION:" or "LOCATION:" followed by the answer
+              const patterns = [
+                new RegExp(`${questionNumber}\\.\\s*${label}:\\s*(.+?)(?=\\n\\d+\\.|\\n[A-Z]+:|$)`, 'is'),
+                new RegExp(`${label}:\\s*(.+?)(?=\\n\\d+\\.|\\n[A-Z]+:|$)`, 'is')
+              ];
+              
+              for (const pattern of patterns) {
+                const match = text.match(pattern);
+                if (match && match[1]) {
+                  const answer = match[1].trim().replace(/^\[|\]$/g, ''); // Remove brackets if present
+                  console.log(`[Extraction] ${label}:`, answer.substring(0, 100) + '...');
+                  return answer;
+                }
+              }
+              
+              console.warn(`[Extraction] ${label}: NOT FOUND`);
+              return '';
             };
             
             const inspiration = {
-              location: extractValue(/location['"]*:\s*['"]*([^'"}\n,]+)/i) || 'A stylish urban setting',
-              mood: extractValue(/mood['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Confident and sophisticated',
-              time: extractValue(/time['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Golden hour lighting',
-              extra: extractValue(/extra['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Complementary props and atmosphere'
+              location: extractAnswer('1', 'LOCATION') || 'A stylish urban setting',
+              mood: extractAnswer('2', 'MOOD') || 'Confident and sophisticated', 
+              time: extractAnswer('3', 'TIME') || 'Golden hour lighting',
+              extra: extractAnswer('4', 'EXTRA') || 'Complementary props and atmosphere'
             };
             
             setLifestyleInputs(inspiration);
-            console.log('[Product-Aware Inspiration] ✨ Extracted from text:', inspiration);
+            console.log('[Product-Aware Inspiration] ✨ Final extracted inspiration:', inspiration);
             
           } else {
             throw new Error(result.error || 'No product-aware inspiration received');
@@ -997,8 +995,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
-              {/* AI Art Director with highly detailed global location suggestions - force refresh */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.7</p>
+              {/* Simplified AI Art Director with direct text extraction */}
+              <p className="text-xs text-gray-300 mt-1">v1.9.8</p>
             </div>
     
             {error && (
