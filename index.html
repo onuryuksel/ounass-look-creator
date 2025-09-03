@@ -149,9 +149,18 @@
     
             if (imageSrcs.length > 0) {
               console.log(`[Success] Found ${imageSrcs.length} images for SKU ${sku}.`);
+              
+              // Log analytics data to see available fields
+              console.log(`[Debug] Analytics data for SKU ${sku}:`, content.analytics);
+              
               const brand = content.analytics?.brand || 'Unknown Brand';
               const name = content.analytics?.name || 'Unknown Product';
-              const category = content.analytics?.department || content.analytics?.class || 'Unknown Category';
+              
+              // Build detailed category: class/subClass format
+              const productClass = content.analytics?.class || content.analytics?.department || 'Unknown';
+              const subClass = content.analytics?.subClass || content.analytics?.subclass || '';
+              const category = subClass ? `${productClass}/${subClass}` : productClass;
+              
               return {
                 sku,
                 images: {
@@ -711,8 +720,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.7.0 */}
-              <p className="text-xs text-gray-300 mt-1">v1.7.0</p>
+              {/* Force refresh for v1.7.1 */}
+              <p className="text-xs text-gray-300 mt-1">v1.7.1</p>
             </div>
     
             {error && (
