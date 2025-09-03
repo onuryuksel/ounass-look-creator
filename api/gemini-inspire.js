@@ -27,14 +27,16 @@ Study the clothing, shoes, accessories, colors, style, formality level, and over
 NOW ANSWER THESE 4 QUESTIONS SPECIFICALLY:
 
 1. WHAT IS THE LOCATION?
-   - Where would someone wearing these specific products naturally be?
-   - Consider: indoor/outdoor, urban/nature, formal/casual venues
-   - Be specific: "rooftop terrace" not just "outdoors"
+   - BE VERY SPECIFIC: Include city/country and iconic landmarks when relevant
+   - Examples: "Rooftop terrace overlooking the Eiffel Tower in Paris", "Modern café in Soho, New York", "Burj Khalifa's observation deck in Dubai"
+   - Consider famous locations that match the product style: luxury hotels, iconic buildings, renowned districts
+   - Think globally: Paris, London, Tokyo, Dubai, Milan, New York, etc.
 
 2. WHAT IS THE MOOD?
-   - What emotional atmosphere matches these products?
-   - Consider: elegant, edgy, relaxed, confident, romantic, etc.
-   - Think about the energy and feeling the products convey
+   - DESCRIBE THE ATMOSPHERE IN DETAIL (2-3 sentences)
+   - Don't just say "elegant" - explain what makes it elegant
+   - Examples: "Sophisticated Parisian chic with an air of effortless confidence", "Edgy urban energy with a rebellious yet refined attitude"
+   - Include the emotional experience, body language, and overall vibe
 
 3. WHAT IS THE TIME OF THE DAY?
    - What time and lighting would best showcase these products?
@@ -47,10 +49,17 @@ NOW ANSWER THESE 4 QUESTIONS SPECIFICALLY:
    - What would complete this perfect lifestyle moment?
 
 REQUIREMENTS:
-- Answer based on the SPECIFIC products you see
-- Be creative but realistic for photography
-- Ensure all elements work together harmoniously
-- Make it aspirational but achievable
+- BE HIGHLY SPECIFIC AND DETAILED in every answer
+- Location must include city/country and famous landmarks or districts
+- Mood must be 2-3 descriptive sentences, not just one word
+- Consider the product colors, style, and formality level
+- Make it aspirational and Instagram-worthy
+- Think of locations that fashion influencers would choose
+
+INSPIRATION EXAMPLES FOR REFERENCE:
+- Casual streetwear → "Trendy coffee shop in Brooklyn's DUMBO with Manhattan Bridge backdrop"
+- Elegant evening wear → "Private terrace at Hotel George V overlooking Champs-Élysées in Paris"
+- Sporty chic → "Modern rooftop gym in Tokyo's Shibuya district with city skyline views"
 
 OUTPUT FORMAT: Return EXACTLY in this JSON format:
 {
