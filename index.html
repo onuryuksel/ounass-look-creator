@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ounass Outfit Generator</title>
+  <title>Ounass Look Generator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -272,6 +272,124 @@
         }
       };
     
+      // AI Creative Director function to inspire lifestyle inputs
+      const inspireLifestyleInputs = async () => {
+        try {
+          setLoadingState('GENERATING_INSPIRATION');
+          
+          const inspirationPrompt = `You are the world's most creative fashion photography art director. Generate an inspiring, unique, and visually striking lifestyle photoshoot concept.
+
+TASK: Create a complete lifestyle scene concept with these 4 specific elements:
+
+1. LOCATION: An interesting, photogenic location (can be indoor/outdoor, urban/nature, exotic/local)
+2. MOOD: The emotional atmosphere and energy of the scene
+3. TIME/LIGHTING: Specific time of day and lighting conditions
+4. EXTRA DETAILS: Additional creative elements, props, weather, or situational details
+
+REQUIREMENTS:
+- Be creative and unique - avoid cliché concepts
+- Make it visually compelling and fashion-forward
+- Consider diverse locations (cities, nature, interiors, unique venues)
+- Think about current fashion trends and aesthetic movements
+- Include specific details that would make for stunning photography
+
+OUTPUT FORMAT: Return EXACTLY in this JSON format:
+{
+  "location": "specific location description",
+  "mood": "mood and atmosphere description", 
+  "time": "time of day and lighting description",
+  "extra": "additional creative details and elements"
+}
+
+Generate ONE complete, inspiring photoshoot concept now:`;
+
+          const response = await fetch('/api/gemini-text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: inspirationPrompt
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Creative inspiration failed');
+          }
+
+          const result = await response.json();
+          
+          if (result.success && result.text) {
+            try {
+              // Try to parse as JSON first
+              const inspirationData = JSON.parse(result.text.trim());
+              
+              // Validate the structure
+              if (inspirationData.location && inspirationData.mood && inspirationData.time && inspirationData.extra) {
+                setLifestyleInputs({
+                  location: inspirationData.location,
+                  mood: inspirationData.mood,
+                  time: inspirationData.time,
+                  extra: inspirationData.extra
+                });
+                console.log('[Creative Director] ✨ Inspiration generated:', inspirationData);
+                return;
+              }
+            } catch (parseError) {
+              console.warn('[Creative Director] JSON parse failed, trying text extraction');
+            }
+            
+            // Fallback: Extract from text if JSON parsing fails
+            const text = result.text;
+            const extractValue = (pattern) => {
+              const match = text.match(pattern);
+              return match ? match[1].trim().replace(/['"]/g, '') : '';
+            };
+            
+            const inspiration = {
+              location: extractValue(/location['"]*:\s*['"]*([^'"}\n,]+)/i) || 'A vibrant urban rooftop terrace',
+              mood: extractValue(/mood['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Sophisticated and energetic',
+              time: extractValue(/time['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Golden hour at sunset',
+              extra: extractValue(/extra['"]*:\s*['"]*([^'"}\n,]+)/i) || 'City skyline backdrop with warm lighting'
+            };
+            
+            setLifestyleInputs(inspiration);
+            console.log('[Creative Director] ✨ Inspiration extracted from text:', inspiration);
+            
+          } else {
+            throw new Error(result.error || 'No inspiration received');
+          }
+          
+        } catch (error) {
+          console.error('[Creative Director] Inspiration failed:', error);
+          // Fallback creative suggestions
+          const fallbackInspiration = [
+            {
+              location: 'A minimalist concrete warehouse with industrial windows',
+              mood: 'Edgy and sophisticated',
+              time: 'Late afternoon with dramatic side lighting',
+              extra: 'Geometric shadows and modern art installations'
+            },
+            {
+              location: 'A lush botanical garden conservatory',
+              mood: 'Serene and dreamy',
+              time: 'Soft morning light filtering through glass',
+              extra: 'Tropical plants and vintage furniture pieces'
+            },
+            {
+              location: 'An upscale Parisian café terrace',
+              mood: 'Chic and effortless',
+              time: 'Golden hour with warm ambient lighting',
+              extra: 'Vintage motorcycles and cobblestone streets'
+            }
+          ];
+          
+          const randomInspiration = fallbackInspiration[Math.floor(Math.random() * fallbackInspiration.length)];
+          setLifestyleInputs(randomInspiration);
+          console.log('[Creative Director] ✨ Using fallback inspiration:', randomInspiration);
+        } finally {
+          setLoadingState('IDLE');
+        }
+      };
+
       // AI Art Director function to enhance scene descriptions
       const enhanceSceneWithArtDirector = async (location, mood, time, extra) => {
         try {
@@ -721,6 +839,26 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                     </label>
                     {showLifestyleForm ? (
                       <div className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-semibold text-gray-800">Lifestyle Scene Details</h3>
+                          <button
+                            onClick={inspireLifestyleInputs}
+                            disabled={loadingState === 'GENERATING_INSPIRATION'}
+                            className="px-3 py-1.5 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                          >
+                            {loadingState === 'GENERATING_INSPIRATION' ? (
+                              <>
+                                <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Inspiring...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>✨</span>
+                                <span>Inspire Me</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                         <div className="flex flex-col space-y-2 mb-4">
                           <input
                             type="text"
@@ -791,7 +929,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <div className="flex flex-col items-center space-y-4">
                 <h2 className="text-xl font-semibold mb-2">4. Generated Image</h2>
                 {generatedImage ? (
-                  <img src={generatedImage} alt="Generated Outfit" className="rounded-lg shadow-lg max-w-full h-auto" />
+                  <img src={generatedImage} alt="Generated Look" className="rounded-lg shadow-lg max-w-full h-auto" />
                 ) : (
                   <div className="w-80 h-80 bg-gray-200 rounded-lg flex items-center justify-center">
                     <span className="text-gray-500">Image failed to load</span>
@@ -843,10 +981,10 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center font-sans">
           <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8 transform transition-all duration-300 ease-in-out hover:scale-[1.01] border-4 border-white">
             <div className="flex flex-col items-center text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
-              <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.9.2 - redeployment */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.2</p>
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
+              <p className="text-gray-500">Create custom looks from SKU.</p>
+              {/* Added Inspire Me feature for lifestyle inputs */}
+              <p className="text-xs text-gray-300 mt-1">v1.9.4</p>
             </div>
     
             {error && (
