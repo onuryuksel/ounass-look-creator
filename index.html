@@ -272,47 +272,57 @@
         }
       };
     
-      // AI Creative Director function to inspire lifestyle inputs
+      // AI Creative Director function to inspire lifestyle inputs based on product images
       const inspireLifestyleInputs = async () => {
         try {
           setLoadingState('GENERATING_INSPIRATION');
           
-          const inspirationPrompt = `You are the world's most creative fashion photography art director. Generate an inspiring, unique, and visually striking lifestyle photoshoot concept.
+          // Get selected product images for AI analysis
+          const selectedImageUrls = Object.keys(selectedImages).map(sku => selectedImages[sku]);
+          
+          if (selectedImageUrls.length === 0) {
+            throw new Error('No product images selected for inspiration');
+          }
+          
+          console.log('[Product-Aware Inspiration] Analyzing', selectedImageUrls.length, 'product images');
+          
+          // Convert selected image URLs to base64 for AI analysis
+          const base64Images = await Promise.all(
+            selectedImageUrls.map(async (url) => {
+              try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                return new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result);
+                  reader.readAsDataURL(blob);
+                });
+              } catch (error) {
+                console.error('Failed to convert image to base64:', error);
+                return null;
+              }
+            })
+          );
+          
+          // Filter out failed conversions
+          const validImages = base64Images.filter(img => img !== null);
+          
+          if (validImages.length === 0) {
+            throw new Error('Failed to process product images for inspiration');
+          }
+          
+          console.log('[Product-Aware Inspiration] Sending', validImages.length, 'images to AI Art Director');
 
-TASK: Create a complete lifestyle scene concept with these 4 specific elements:
-
-1. LOCATION: An interesting, photogenic location (can be indoor/outdoor, urban/nature, exotic/local)
-2. MOOD: The emotional atmosphere and energy of the scene
-3. TIME/LIGHTING: Specific time of day and lighting conditions
-4. EXTRA DETAILS: Additional creative elements, props, weather, or situational details
-
-REQUIREMENTS:
-- Be creative and unique - avoid cliché concepts
-- Make it visually compelling and fashion-forward
-- Consider diverse locations (cities, nature, interiors, unique venues)
-- Think about current fashion trends and aesthetic movements
-- Include specific details that would make for stunning photography
-
-OUTPUT FORMAT: Return EXACTLY in this JSON format:
-{
-  "location": "specific location description",
-  "mood": "mood and atmosphere description", 
-  "time": "time of day and lighting description",
-  "extra": "additional creative details and elements"
-}
-
-Generate ONE complete, inspiring photoshoot concept now:`;
-
-          const response = await fetch('/api/gemini-text', {
+          const response = await fetch('/api/gemini-inspire', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              prompt: inspirationPrompt
+              images: validImages
             })
           });
 
           if (!response.ok) {
-            throw new Error('Creative inspiration failed');
+            throw new Error('Product-aware inspiration failed');
           }
 
           const result = await response.json();
@@ -330,11 +340,11 @@ Generate ONE complete, inspiring photoshoot concept now:`;
                   time: inspirationData.time,
                   extra: inspirationData.extra
                 });
-                console.log('[Creative Director] ✨ Inspiration generated:', inspirationData);
+                console.log('[Product-Aware Inspiration] ✨ Generated for products:', inspirationData);
                 return;
               }
             } catch (parseError) {
-              console.warn('[Creative Director] JSON parse failed, trying text extraction');
+              console.warn('[Product-Aware Inspiration] JSON parse failed, trying text extraction');
             }
             
             // Fallback: Extract from text if JSON parsing fails
@@ -345,46 +355,47 @@ Generate ONE complete, inspiring photoshoot concept now:`;
             };
             
             const inspiration = {
-              location: extractValue(/location['"]*:\s*['"]*([^'"}\n,]+)/i) || 'A vibrant urban rooftop terrace',
-              mood: extractValue(/mood['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Sophisticated and energetic',
-              time: extractValue(/time['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Golden hour at sunset',
-              extra: extractValue(/extra['"]*:\s*['"]*([^'"}\n,]+)/i) || 'City skyline backdrop with warm lighting'
+              location: extractValue(/location['"]*:\s*['"]*([^'"}\n,]+)/i) || 'A stylish urban setting',
+              mood: extractValue(/mood['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Confident and sophisticated',
+              time: extractValue(/time['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Golden hour lighting',
+              extra: extractValue(/extra['"]*:\s*['"]*([^'"}\n,]+)/i) || 'Complementary props and atmosphere'
             };
             
             setLifestyleInputs(inspiration);
-            console.log('[Creative Director] ✨ Inspiration extracted from text:', inspiration);
+            console.log('[Product-Aware Inspiration] ✨ Extracted from text:', inspiration);
             
           } else {
-            throw new Error(result.error || 'No inspiration received');
+            throw new Error(result.error || 'No product-aware inspiration received');
           }
           
         } catch (error) {
-          console.error('[Creative Director] Inspiration failed:', error);
-          // Fallback creative suggestions
-          const fallbackInspiration = [
+          console.error('[Product-Aware Inspiration] Failed:', error);
+          
+          // Product-aware fallback suggestions (more generic but still thoughtful)
+          const productAwareFallbacks = [
             {
-              location: 'A minimalist concrete warehouse with industrial windows',
-              mood: 'Edgy and sophisticated',
-              time: 'Late afternoon with dramatic side lighting',
-              extra: 'Geometric shadows and modern art installations'
+              location: 'A modern minimalist studio with natural light',
+              mood: 'Clean and sophisticated',
+              time: 'Soft daylight through large windows',
+              extra: 'Subtle textures and neutral backdrop to highlight the products'
             },
             {
-              location: 'A lush botanical garden conservatory',
-              mood: 'Serene and dreamy',
-              time: 'Soft morning light filtering through glass',
-              extra: 'Tropical plants and vintage furniture pieces'
+              location: 'An upscale urban café with contemporary design',
+              mood: 'Relaxed elegance',
+              time: 'Warm afternoon light',
+              extra: 'Modern furniture and architectural details'
             },
             {
-              location: 'An upscale Parisian café terrace',
-              mood: 'Chic and effortless',
-              time: 'Golden hour with warm ambient lighting',
-              extra: 'Vintage motorcycles and cobblestone streets'
+              location: 'A stylish rooftop terrace with city views',
+              mood: 'Confident and dynamic',
+              time: 'Golden hour with urban backdrop',
+              extra: 'Contemporary setting that complements fashion-forward styling'
             }
           ];
           
-          const randomInspiration = fallbackInspiration[Math.floor(Math.random() * fallbackInspiration.length)];
+          const randomInspiration = productAwareFallbacks[Math.floor(Math.random() * productAwareFallbacks.length)];
           setLifestyleInputs(randomInspiration);
-          console.log('[Creative Director] ✨ Using fallback inspiration:', randomInspiration);
+          console.log('[Product-Aware Inspiration] ✨ Using product-aware fallback:', randomInspiration);
         } finally {
           setLoadingState('IDLE');
         }
@@ -840,7 +851,10 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                     {showLifestyleForm ? (
                       <div className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full">
                         <div className="flex justify-between items-center mb-4">
-                          <h3 className="font-semibold text-gray-800">Lifestyle Scene Details</h3>
+                          <div>
+                            <h3 className="font-semibold text-gray-800">Lifestyle Scene Details</h3>
+                            <p className="text-xs text-gray-500 mt-1">AI will analyze your selected products to suggest matching scenes</p>
+                          </div>
                           <button
                             onClick={inspireLifestyleInputs}
                             disabled={loadingState === 'GENERATING_INSPIRATION'}
@@ -849,11 +863,11 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                             {loadingState === 'GENERATING_INSPIRATION' ? (
                               <>
                                 <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span>Inspiring...</span>
+                                <span>Analyzing...</span>
                               </>
                             ) : (
                               <>
-                                <span>✨</span>
+                                <span>🎨</span>
                                 <span>Inspire Me</span>
                               </>
                             )}
@@ -983,8 +997,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
-              {/* Added Inspire Me feature for lifestyle inputs */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.4</p>
+              {/* Product-Aware Inspire Me with AI image analysis */}
+              <p className="text-xs text-gray-300 mt-1">v1.9.5</p>
             </div>
     
             {error && (

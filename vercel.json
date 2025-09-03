@@ -5,6 +5,9 @@
     },
     "api/gemini-text.js": {
       "maxDuration": 30
+    },
+    "api/gemini-inspire.js": {
+      "maxDuration": 30
     }
   }
 }
