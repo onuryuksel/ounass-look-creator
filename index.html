@@ -14,7 +14,19 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
   <!-- Vercel Analytics -->
-  <script defer src="https://unpkg.com/@vercel/analytics@1.1.1/dist/index.js"></script>
+  <script>
+    (function() {
+      var script = document.createElement('script');
+      script.src = 'https://unpkg.com/@vercel/analytics@1.1.1/dist/index.js';
+      script.onload = function() {
+        if (window.va && window.va.inject) {
+          window.va.inject();
+          console.log('[Analytics] Vercel Web Analytics injected successfully');
+        }
+      };
+      document.head.appendChild(script);
+    })();
+  </script>
   <style>
     body { font-family: 'Inter', sans-serif; }
     input:focus, button:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
@@ -836,8 +848,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             <div className="flex flex-col items-center text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Outfit Generator</h1>
               <p className="text-gray-500">Create custom outfits from SKU.</p>
-              {/* Force refresh for v1.9.0 */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.0</p>
+              {/* Force refresh for v1.9.1 */}
+              <p className="text-xs text-gray-300 mt-1">v1.9.1</p>
             </div>
     
             {error && (
@@ -914,9 +926,41 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
   
   <!-- Initialize Vercel Analytics -->
   <script>
-    // Vercel Analytics will automatically track page views
-    // Custom events can be tracked using: window.va?.track('event_name', { properties })
-    console.log('[Analytics] Vercel Web Analytics loaded');
+    // Wait for analytics to be ready and test it
+    function checkAnalytics() {
+      if (window.va && window.va.track) {
+        console.log('[Analytics] ✅ Vercel Web Analytics is ready!');
+        console.log('[Analytics] Testing with debug event...');
+        
+        // Send a test event
+        window.va.track('app_loaded', {
+          timestamp: new Date().toISOString(),
+          version: 'v1.9.1',
+          user_agent: navigator.userAgent.substring(0, 50)
+        });
+        
+        console.log('[Analytics] ✅ Test event sent');
+        return true;
+      } else {
+        console.log('[Analytics] ⏳ Waiting for analytics to load...');
+        return false;
+      }
+    }
+    
+    // Check immediately and then retry
+    if (!checkAnalytics()) {
+      // Retry after 1 second
+      setTimeout(function() {
+        if (!checkAnalytics()) {
+          console.error('[Analytics] ❌ Failed to initialize after 1 second');
+          console.log('[Analytics] 🔍 Debug info:', {
+            'window.va exists': typeof window.va !== 'undefined',
+            'window.va': window.va,
+            'document.readyState': document.readyState
+          });
+        }
+      }, 1000);
+    }
   </script>
 </body>
 </html>
