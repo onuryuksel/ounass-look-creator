@@ -19,38 +19,48 @@ export default async function handler(req, res) {
     console.log('IMAGE COUNT:', images?.length);
     console.log('----------------------------------------');
     
-    const inspirationPrompt = `You are the world's most creative fashion photography art director. Analyze the fashion products shown in these images and create a PERFECT lifestyle scene concept that complements these specific items.
+    const inspirationPrompt = `You are a world-class fashion photography art director. Analyze the fashion products in these images and answer these 4 specific questions to create the perfect lifestyle scene:
 
-ANALYSIS TASK:
-1. Study each product carefully (clothing, shoes, accessories, etc.)
-2. Identify the style aesthetic (casual, formal, edgy, bohemian, etc.)
-3. Consider the colors, textures, and overall vibe
-4. Think about what lifestyle/occasion these products suit
+ANALYZE THE PRODUCTS:
+Study the clothing, shoes, accessories, colors, style, formality level, and overall aesthetic of the products shown.
 
-SCENE CREATION TASK:
-Create a complete lifestyle photoshoot concept with these 4 elements that PERFECTLY match the products:
+NOW ANSWER THESE 4 QUESTIONS SPECIFICALLY:
 
-1. LOCATION: A specific location that complements the product style and aesthetic
-2. MOOD: The emotional atmosphere that matches the product vibe  
-3. TIME/LIGHTING: Time of day and lighting that enhances the product colors/style
-4. EXTRA DETAILS: Props, weather, activities, or situational elements that fit the products
+1. WHAT IS THE LOCATION?
+   - Where would someone wearing these specific products naturally be?
+   - Consider: indoor/outdoor, urban/nature, formal/casual venues
+   - Be specific: "rooftop terrace" not just "outdoors"
+
+2. WHAT IS THE MOOD?
+   - What emotional atmosphere matches these products?
+   - Consider: elegant, edgy, relaxed, confident, romantic, etc.
+   - Think about the energy and feeling the products convey
+
+3. WHAT IS THE TIME OF THE DAY?
+   - What time and lighting would best showcase these products?
+   - Consider: morning light, golden hour, evening, noon, blue hour
+   - Think about how lighting affects the product colors and textures
+
+4. WHAT ARE THE FURTHER DETAILS ABOUT THE SCENE?
+   - What additional elements, props, activities, or atmosphere details?
+   - Consider: weather, activities, props, background elements
+   - What would complete this perfect lifestyle moment?
 
 REQUIREMENTS:
-- Make the scene concept SPECIFICALLY suited to these exact products
-- Consider the formality level, color palette, and style aesthetic
-- Think about where someone wearing these items would naturally be
-- Create visual harmony between products and environment
-- Be creative but realistic and achievable for photography
+- Answer based on the SPECIFIC products you see
+- Be creative but realistic for photography
+- Ensure all elements work together harmoniously
+- Make it aspirational but achievable
 
 OUTPUT FORMAT: Return EXACTLY in this JSON format:
 {
-  "location": "specific location description that matches the products",
-  "mood": "mood and atmosphere that complements the style", 
-  "time": "time of day and lighting that enhances the products",
-  "extra": "additional elements that create perfect scene for these products"
+  "location": "your specific answer to question 1",
+  "mood": "your specific answer to question 2", 
+  "time": "your specific answer to question 3",
+  "extra": "your specific answer to question 4"
 }
 
-Analyze the products and generate ONE perfect, product-matched lifestyle concept:`;
+Answer these 4 questions based on the products shown:`;
 
     const payload = {
       contents: [{
