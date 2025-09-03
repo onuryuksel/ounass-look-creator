@@ -244,6 +244,11 @@
           }));
           const productReferences = productDetails.map(p => `the ${p.category.toLowerCase()} from ${p.ref}`).join(', ');
 
+          // Generate dynamic product specifications based on actual number of products
+          const productSpecifications = productDetails.map((detail, index) => 
+            `- Image ${index + 1}: ${detail.category} - REPLICATE EXACTLY`
+          ).join('\n');
+
           let finalPrompt = '';
           if (isLifestyle) {
             // Construct the DYNAMIC lifestyle prompt with AGGRESSIVE product preservation
@@ -253,10 +258,7 @@ CRITICAL REQUIREMENT - PRODUCT PRESERVATION:
 The model MUST wear the EXACT products from the provided reference images. These products are NOT to be used as inspiration - they are to be REPLICATED PERFECTLY with zero modifications.
 
 PRODUCT SPECIFICATIONS:
-- Image 1: ${productDetails[0]?.category || 'item'} - REPLICATE EXACTLY
-- Image 2: ${productDetails[1]?.category || 'item'} - REPLICATE EXACTLY  
-- Image 3: ${productDetails[2]?.category || 'item'} - REPLICATE EXACTLY
-- Image 4: ${productDetails[3]?.category || 'item'} - REPLICATE EXACTLY
+${productSpecifications}
 
 SCENE SETTING:
 Location: '${lifestyleInputs.location}' with a '${lifestyleInputs.mood}' mood.
@@ -275,10 +277,7 @@ CRITICAL REQUIREMENT - PRODUCT PRESERVATION:
 The model MUST wear the EXACT products from the provided reference images. These products are NOT to be used as inspiration - they are to be REPLICATED PERFECTLY with zero modifications.
 
 PRODUCT SPECIFICATIONS:
-- Image 1: ${productDetails[0]?.category || 'item'} - REPLICATE EXACTLY
-- Image 2: ${productDetails[1]?.category || 'item'} - REPLICATE EXACTLY
-- Image 3: ${productDetails[2]?.category || 'item'} - REPLICATE EXACTLY  
-- Image 4: ${productDetails[3]?.category || 'item'} - REPLICATE EXACTLY
+${productSpecifications}
 
 STUDIO SETTING:
 Pose: Elegant and static.
