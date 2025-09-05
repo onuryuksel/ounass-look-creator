@@ -72,14 +72,35 @@ REQUIREMENTS:
 
 CRITICAL FOR LOCATIONS - You are a world-class fashion art director. This is a LUXURY BRAND fashion shoot - choose ICONIC locations that match the product sophistication:
 
-Think like a top fashion photographer. Consider:
-- ICONIC CITIES worldwide (Paris, Milan, NYC, Tokyo, Dubai, etc. - or others you know are perfect)
-- ICONIC OUTDOOR LOCATIONS (famous parks, squares, bridges, viewpoints)
-- ICONIC HOTELS & RESTAURANTS (legendary establishments known in fashion)
-- ICONIC MONUMENTS & ARCHITECTURE (world-famous landmarks)  
-- ICONIC INTERIORS (museums, galleries, penthouses, luxury showrooms)
+Consider these categories (examples provided, but use your expertise to choose the perfect location):
 
-Use your expertise as an art director to select the most suitable iconic location based on the product style, brand positioning, and desired mood. Don't be limited to examples - choose what you know will create the most stunning luxury fashion imagery.
+ICONIC CITIES: Paris, Milan, NYC, London, Tokyo, Dubai, Los Angeles, Hong Kong, Rome, Istanbul, Barcelona, Marrakech, Vienna, Cape Town, Sydney
+
+ICONIC OUTDOOR LOCATIONS: Santorini cliffs, Amalfi Coast, Central Park NYC, Dubai Desert, Jardin des Tuileries Paris, Cinque Terre, Shibuya Crossing, Lake Como, Cappadocia, Joshua Tree, Swiss Alps
+
+ICONIC HOTELS: Ritz Paris, Burj Al Arab Dubai, Plaza Athénée Paris, Peninsula Hong Kong, Aman Tokyo, Gritti Palace Venice, Beverly Hills Hotel, La Mamounia Marrakech
+
+ICONIC RESTAURANTS: Noma Copenhagen, Cipriani Venice, Le Jules Verne Paris, Zuma Dubai, Caviar Kaspia Paris, Nobu Malibu, Sketch London
+
+ICONIC MONUMENTS: Eiffel Tower, Colosseum, Statue of Liberty, Burj Khalifa, Taj Mahal, Big Ben, Arc de Triomphe, Sagrada Familia
+
+ICONIC SQUARES: Times Square, Piazza San Marco Venice, Place Vendôme Paris, Trafalgar Square London, Red Square Moscow
+
+ICONIC INTERIORS: Versailles Hall of Mirrors, Louvre galleries, Met Museum NYC, Milan Cathedral, Royal Opera House London
+
+ICONIC BRIDGES: Pont Alexandre III Paris, Brooklyn Bridge NYC, Golden Gate Bridge, Tower Bridge London, Rialto Bridge Venice
+
+ICONIC BEACHES: Bondi Beach, Whitehaven Beach, Seychelles, Malibu Beach, Navagio Beach Greece
+
+ICONIC SHOPPING: Champs-Élysées, Rodeo Drive, Bond Street, Ginza Tokyo, Via Montenapoleone Milan, Fifth Avenue NYC
+
+ICONIC ROOFTOPS: Sky Garden London, The Roof NYC, Cé La Vie Singapore, View at The Palm Dubai
+
+ICONIC VIEWPOINTS: Top of the Rock NYC, Montmartre Paris, The Peak Hong Kong, Table Mountain Cape Town
+
+WINTER LOCATIONS: St. Moritz, Aspen, Courchevel, Zermatt, Lapland Northern Lights
+
+Use your fashion expertise to select the most suitable iconic location. These are just examples - choose any world-renowned location that creates stunning luxury fashion imagery matching the product style and mood.
 
 Analyze the products and respond now:`;
 
