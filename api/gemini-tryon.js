@@ -243,9 +243,10 @@ Generate a professional, photo-realistic image with natural lighting and realist
       console.log('Product count:', productDetails.length);
       console.log('--------------------------------');
       
-      return res.json({ 
-        success: true, 
+            return res.json({
+        success: true,
         image: `data:${mimeType};base64,${tryOnImageData}`,
+        prompt: tryOnPrompt, // CRITICAL: Send prompt to frontend
         debug: { 
           model: model,
           productCount: productDetails.length,
@@ -272,6 +273,7 @@ Generate a professional, photo-realistic image with natural lighting and realist
       return res.status(500).json({ 
         error: 'No try-on image received from AI',
         aiResponse: aiTextResponse,
+        prompt: tryOnPrompt, // CRITICAL: Send prompt to frontend even on error
         debug: result
       });
     }
@@ -285,6 +287,7 @@ Generate a professional, photo-realistic image with natural lighting and realist
     
     return res.status(500).json({ 
       error: error.message || 'Unknown error occurred during virtual try-on',
+      prompt: tryOnPrompt || 'Prompt not generated', // CRITICAL: Send prompt even on error
       debug: {
         errorType: error.constructor.name
       }

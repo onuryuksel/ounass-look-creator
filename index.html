@@ -716,6 +716,11 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           console.log('🚨 AI Response text:', result.aiResponse);
           console.log('🚨 Full result keys:', Object.keys(result));
           
+          // CRITICAL: Display the actual prompt used
+          console.log('🔥🔥🔥 PROMPT SENT TO AI 🔥🔥🔥');
+          console.log(result.prompt);
+          console.log('🔥🔥🔥 END OF PROMPT 🔥🔥🔥');
+          
           if (result.success) {
             setGeneratedImage(result.image);
             setCurrentStep(4);
@@ -725,6 +730,12 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             console.log('🚨 TRY-ON FAILED 🚨');
             console.log('🚨 Error:', result.error);
             console.log('🚨 AI Text Response:', result.aiResponse);
+            
+            // CRITICAL: Display prompt even on failure
+            console.log('🔥🔥🔥 PROMPT SENT TO AI (ERROR CASE) 🔥🔥🔥');
+            console.log(result.prompt);
+            console.log('🔥🔥🔥 END OF PROMPT 🔥🔥🔥');
+            
             throw new Error(result.error || 'Failed to generate try-on image');
           }
 
@@ -1229,7 +1240,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.22</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.23</p>
             </div>
     
             {error && (
