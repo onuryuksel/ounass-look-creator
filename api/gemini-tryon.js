@@ -88,16 +88,21 @@ PRODUCT ${index + 1}:
 
     const tryOnPrompt = `${sourceImageDescriptions}
 
-Prompt: Create a high-resolution, realistic image of the subject from Source Image 1. The subject should be ${wearingInstructions}.
+Prompt: Create a high-resolution, realistic image of the SAME SINGLE PERSON from Source Image 1. The subject should be ${wearingInstructions}.
+
+CRITICAL REQUIREMENTS:
+1. SINGLE PERSON ONLY: Show EXACTLY ONE PERSON - the same person from Source Image 1. Do NOT add additional people.
+2. SAME IDENTITY: The person must be identical to Source Image 1 - same face, same body, same identity.
+3. CLOTHING REPLACEMENT: Replace ALL existing clothing with the new clothing items specified above.
+4. NO NEW PEOPLE: Do not generate additional models, people, or figures in the image.
 
 Instructions:
-1. CRITICAL: Replace ALL existing clothing with the new clothing items specified above. Remove the current outfit completely.
-2. Apply accessories (bags, shoes) in addition to the clothing, not as replacements.
-3. Seamlessly integrate all items onto the subject, ensuring realistic fit and proportions.
-4. Maintain the exact pose, lighting, and background of Source Image 1.
-5. Create consistent shadows, reflections, and fabric textures for photorealism.
-6. Do not alter the subject's face, hair, or surroundings.
-7. Prioritize clothing changes over accessory additions.
+1. Apply accessories (bags, shoes) in addition to the clothing, not as replacements.
+2. Seamlessly integrate all items onto the subject, ensuring realistic fit and proportions.
+3. Maintain the exact pose, lighting, and background of Source Image 1.
+4. Create consistent shadows, reflections, and fabric textures for photorealism.
+5. Do not alter the subject's face, hair, or surroundings.
+6. Keep the same single-person composition as Source Image 1.
 
 Product Details:
 ${productSpecs}
