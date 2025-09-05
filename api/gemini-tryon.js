@@ -1,10 +1,10 @@
 
 export default async function handler(req, res) {
-  console.log('--- TRY-ON API STARTED ---');
+  console.log('🚨🚨🚨 TRY-ON API CALLED - THIS SHOULD BE VISIBLE! 🚨🚨🚨');
   console.log('Method:', req.method);
   console.log('Headers:', req.headers);
   console.log('Body keys:', Object.keys(req.body || {}));
-  console.log('--- API INITIALIZATION ---');
+  console.log('🚨🚨🚨 API INITIALIZATION COMPLETE 🚨🚨🚨');
 
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');

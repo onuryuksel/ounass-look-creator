@@ -684,19 +684,37 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           console.log('Frontend payload size:', frontendSizeMB, 'MB');
           console.log('--- PAYLOAD DATA SENT TO /api/gemini-tryon ---');
           
-          console.log('[Try-On] Sending try-on request...');
+          console.log('🚨 ABOUT TO CALL /api/gemini-tryon 🚨');
+          console.log('🚨 API URL: /api/gemini-tryon');
+          console.log('🚨 Method: POST');
+          console.log('🚨 Payload size:', JSON.stringify(tryOnPayload).length, 'chars');
+          
           const response = await fetch('/api/gemini-tryon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(tryOnPayload)
           });
+          
+          console.log('🚨 RESPONSE RECEIVED 🚨');
+          console.log('🚨 Response status:', response.status);
+          console.log('🚨 Response ok:', response.ok);
 
           if (!response.ok) {
+            console.log('🚨 RESPONSE NOT OK - GETTING ERROR DATA 🚨');
             const errorData = await response.json();
+            console.log('🚨 Error data:', errorData);
             throw new Error(errorData.error || 'Virtual try-on failed');
           }
           
           const result = await response.json();
+          
+          console.log('🚨 TRY-ON API RESPONSE ANALYSIS 🚨');
+          console.log('🚨 Success:', result.success);
+          console.log('🚨 Has image:', !!result.image);
+          console.log('🚨 Image length:', result.image?.length);
+          console.log('🚨 Debug info:', result.debug);
+          console.log('🚨 AI Response text:', result.aiResponse);
+          console.log('🚨 Full result keys:', Object.keys(result));
           
           if (result.success) {
             setGeneratedImage(result.image);
@@ -704,6 +722,9 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             const endTime = performance.now();
             console.log(`[Try-On] Virtual try-on completed in ${Math.round(endTime - startTime)}ms`);
           } else {
+            console.log('🚨 TRY-ON FAILED 🚨');
+            console.log('🚨 Error:', result.error);
+            console.log('🚨 AI Text Response:', result.aiResponse);
             throw new Error(result.error || 'Failed to generate try-on image');
           }
 
@@ -1208,7 +1229,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.21</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.22</p>
             </div>
     
             {error && (
