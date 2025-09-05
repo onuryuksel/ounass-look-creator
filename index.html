@@ -961,59 +961,47 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                 </div>
                 <div className="flex flex-col space-y-4">
                   <div>
-                    <label className="flex items-center justify-between cursor-pointer">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="prompt"
-                          value="studio"
-                          checked={selectedPrompt === 'studio'}
-                          onChange={(e) => { 
-                            setSelectedPrompt(e.target.value); 
-                            setShowLifestyleForm(false); 
-                            setShowTryOnForm(false); 
-                          }}
-                          className="form-radio text-blue-600"
-                        />
-                        <span className="font-medium text-lg">Studio Shoot Prompt:</span>
-                      </div>
-                      <button onClick={() => generatePrompts(false)} className="text-sm p-1 px-3 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
-                        Refresh
-                      </button>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="prompt"
+                        value="studio"
+                        checked={selectedPrompt === 'studio'}
+                        onChange={(e) => { 
+                          setSelectedPrompt(e.target.value); 
+                          setShowLifestyleForm(false); 
+                          setShowTryOnForm(false); 
+                        }}
+                        className="form-radio text-blue-600"
+                      />
+                      <span className="font-medium text-lg">Studio Shoot Prompt</span>
                     </label>
-                    <textarea
-                      value={prompts.studio}
-                      onChange={(e) => setPrompts(prev => ({ ...prev, studio: e.target.value }))}
-                      className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Edit the prompt here..."
-                    />
+                    {selectedPrompt === 'studio' && (
+                      <textarea
+                        value={prompts.studio}
+                        onChange={(e) => setPrompts(prev => ({ ...prev, studio: e.target.value }))}
+                        className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Edit the prompt here..."
+                      />
+                    )}
                   </div>
                   <div>
-                    <label className="flex items-center justify-between cursor-pointer">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="prompt"
-                          value="lifestyle"
-                          checked={selectedPrompt === 'lifestyle'}
-                          onChange={(e) => {
-                            setSelectedPrompt(e.target.value);
-                            setShowTryOnForm(false);
-                          }}
-                          className="form-radio text-blue-600"
-                        />
-                        <span className="font-medium text-lg">Lifestyle Shoot Prompt:</span>
-                      </div>
-                      {!showLifestyleForm && (
-                        <button
-                          onClick={() => setShowLifestyleForm(true)}
-                          className="text-sm p-1 px-3 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
-                        >
-                          Generate Prompt
-                        </button>
-                      )}
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="prompt"
+                        value="lifestyle"
+                        checked={selectedPrompt === 'lifestyle'}
+                        onChange={(e) => {
+                          setSelectedPrompt(e.target.value);
+                          setShowTryOnForm(false);
+                          setShowLifestyleForm(true);
+                        }}
+                        className="form-radio text-blue-600"
+                      />
+                      <span className="font-medium text-lg">Lifestyle Shoot Prompt</span>
                     </label>
-                    {showLifestyleForm ? (
+                    {selectedPrompt === 'lifestyle' && (showLifestyleForm ? (
                       <div className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full">
                         <div className="flex justify-between items-center mb-4">
                           <div>
@@ -1081,31 +1069,29 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                         className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Click 'Generate Prompt' to create a custom lifestyle prompt based on your inputs..."
                       />
-                    )}
+                    ))}
                   </div>
                   
                   {/* Try On Yourself Option */}
                   <div>
-                    <label className="flex items-center justify-between cursor-pointer">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="prompt"
-                          value="tryon"
-                          checked={selectedPrompt === 'tryon'}
-                          onChange={(e) => {
-                            setSelectedPrompt(e.target.value);
-                            if (e.target.value === 'tryon') {
-                              setShowTryOnForm(true);
-                            }
-                          }}
-                          className="form-radio text-blue-600"
-                        />
-                        <span className="font-medium text-lg">Try On Yourself:</span>
-                      </div>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="prompt"
+                        value="tryon"
+                        checked={selectedPrompt === 'tryon'}
+                        onChange={(e) => {
+                          setSelectedPrompt(e.target.value);
+                          if (e.target.value === 'tryon') {
+                            setShowTryOnForm(true);
+                          }
+                        }}
+                        className="form-radio text-blue-600"
+                      />
+                      <span className="font-medium text-lg">Try On Yourself</span>
                     </label>
                     
-                    {selectedPrompt === 'tryon' && showTryOnForm && (
+                    {selectedPrompt === 'tryon' && (
                       <div className="bg-blue-50 p-4 mt-2 rounded-lg">
                         <div className="flex justify-between items-center mb-4">
                           <div>
@@ -1149,12 +1135,6 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                             </div>
                           )}
                         </div>
-                      </div>
-                    )}
-                    
-                    {selectedPrompt === 'tryon' && !showTryOnForm && (
-                      <div className="bg-gray-100 p-4 mt-2 rounded-lg text-center">
-                        <p className="text-sm text-gray-600">Upload your photo to enable virtual try-on</p>
                       </div>
                     )}
                   </div>
@@ -1238,7 +1218,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.12</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.13</p>
             </div>
     
             {error && (
