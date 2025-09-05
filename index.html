@@ -55,54 +55,25 @@
       const handleTryOnPhotoUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
-          // Check file size (5MB limit for try-on)
-          if (file.size > 5 * 1024 * 1024) {
-            setError('Photo size must be less than 5MB for try-on');
+          // Check file size (10MB limit for try-on - increased for better quality)
+          if (file.size > 10 * 1024 * 1024) {
+            setError('Photo size must be less than 10MB for try-on');
             return;
           }
           
-          // Create image element for compression
-          const img = new Image();
-          img.onload = () => {
-            // Create canvas for compression
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Calculate new dimensions (max 1024px on longest side)
-            const maxSize = 1024;
-            let { width, height } = img;
-            
-            if (width > height) {
-              if (width > maxSize) {
-                height = (height * maxSize) / width;
-                width = maxSize;
-              }
-            } else {
-              if (height > maxSize) {
-                width = (width * maxSize) / height;
-                height = maxSize;
-              }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            // Draw and compress
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // Convert to base64 with compression (0.7 quality)
-            const compressedDataURL = canvas.toDataURL('image/jpeg', 0.7);
-            
-            console.log(`[Photo Compression] Original: ${file.size} bytes, Compressed: ${compressedDataURL.length} chars`);
-            
-            setTryOnPhoto(compressedDataURL);
+          // Read file directly without compression for maximum quality
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const originalDataURL = e.target.result;
+            console.log(`[Photo Upload] Original quality maintained: ${file.size} bytes`);
+            setTryOnPhoto(originalDataURL);
             setError(null);
           };
           
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            img.src = e.target.result;
+          reader.onerror = () => {
+            setError('Failed to load the uploaded photo');
           };
+          
           reader.readAsDataURL(file);
         }
       };
@@ -632,40 +603,6 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         }
       };
     
-      // Compress base64 image for API efficiency
-      const compressBase64Image = async (base64String, maxSize = 512, quality = 0.6) => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Calculate new dimensions
-            let { width, height } = img;
-            
-            if (width > height) {
-              if (width > maxSize) {
-                height = (height * maxSize) / width;
-                width = maxSize;
-              }
-            } else {
-              if (height > maxSize) {
-                width = (width * maxSize) / height;
-                height = maxSize;
-              }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            const compressed = canvas.toDataURL('image/jpeg', quality);
-            console.log(`[Compression] ${img.width}x${img.height} → ${width}x${height}, Quality: ${quality}`);
-            resolve(compressed);
-          };
-          img.src = base64String;
-        });
-      };
     
       // Handles virtual try-on generation
       const handleTryOnGeneration = async () => {
@@ -676,13 +613,12 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         const startTime = performance.now();
         
         try {
-          // Convert product images to base64 with compression
+          // Convert product images to base64 (original quality)
           const selectedImageUrls = Object.values(selectedImages);
-          console.log(`[Try-On] Compressing ${selectedImageUrls.length} product images...`);
+          console.log(`[Try-On] Converting ${selectedImageUrls.length} product images to base64...`);
           
           const base64Products = await Promise.all(selectedImageUrls.map(async (url) => {
-            const originalBase64 = await urlToBase64(url);
-            return await compressBase64Image(originalBase64, 512, 0.6); // Smaller for products
+            return await urlToBase64(url); // No compression - original quality
           }));
           
           // Log final prompt data being sent
@@ -1131,7 +1067,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                                     <span className="text-2xl">📷</span>
                                   </div>
                                   <p className="text-sm font-medium text-gray-700">Click to upload your photo</p>
-                                  <p className="text-xs text-gray-500">JPG, PNG, or GIF (max 5MB, auto-compressed)</p>
+                                  <p className="text-xs text-gray-500">JPG, PNG, or GIF (max 10MB, original quality)</p>
                                 </div>
                               )}
                             </label>
@@ -1227,7 +1163,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.15</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.16</p>
             </div>
     
             {error && (
