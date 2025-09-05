@@ -822,15 +822,23 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           
           // For lifestyle prompts, add product specifications
           let finalPrompt = prompts[selectedPrompt];
+          console.log('[DEBUG] Selected prompt type:', selectedPrompt);
+          console.log('[DEBUG] Original prompt includes placeholder?', finalPrompt.includes('[Products will be inserted here by the frontend]'));
+          console.log('[DEBUG] Selected images:', Object.keys(selectedImages));
+          
           if (selectedPrompt === 'lifestyle' && finalPrompt.includes('[Products will be inserted here by the frontend]')) {
             // Generate product specifications
             const productSpecs = Object.keys(selectedImages).map((sku, index) => {
               const product = productImages[sku];
+              console.log('[DEBUG] Processing product:', sku, product?.name, product?.brand);
               return `PRODUCT ${index + 1}: ${product.name} by ${product.brand}`;
             }).join('\n');
             
+            console.log('[DEBUG] Generated product specs:', productSpecs);
             finalPrompt = finalPrompt.replace('[Products will be inserted here by the frontend]', productSpecs);
-            console.log('[Lifestyle] Added product specifications to prompt');
+            console.log('[Lifestyle] ✅ Added product specifications to prompt');
+          } else {
+            console.log('[DEBUG] No product replacement needed or conditions not met');
           }
           
           // --- CRITICAL DEBUG LOG ---
@@ -1305,7 +1313,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.47</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.48</p>
             </div>
     
             {error && (
