@@ -70,16 +70,16 @@ REQUIREMENTS:
 - Create Instagram-worthy, aspirational content
 - Ensure all 4 fields work together cohesively
 
-CRITICAL FOR LOCATIONS - This is a LUXURY BRAND fashion shoot, choose ICONIC locations:
-- ICONIC CITIES: Paris, Milan, New York, Tokyo, Dubai, London, Monaco, Beverly Hills
-- ICONIC OUTDOOR LOCATIONS: Central Park NYC, Trocadéro Paris, Hyde Park London, Shibuya Crossing Tokyo
-- ICONIC HOTELS: Ritz Paris, Plaza Hotel NYC, Burj Al Arab Dubai, Claridge's London, Hotel George V Paris
-- ICONIC RESTAURANTS: Café de Flore Paris, The Ivy London, Nobu Malibu, La Bernardin NYC
-- ICONIC MONUMENTS: Eiffel Tower, Big Ben, Empire State Building, Burj Khalifa, Colosseum
-- ICONIC SQUARES: Times Square, Trafalgar Square, Piazza del Duomo, Red Square
-- ICONIC INTERIORS: Museum galleries, luxury penthouses, designer showrooms, high-end boutiques
+CRITICAL FOR LOCATIONS - You are a world-class fashion art director. This is a LUXURY BRAND fashion shoot - choose ICONIC locations that match the product sophistication:
 
-Choose locations that match luxury fashion brand standards and product sophistication level.
+Think like a top fashion photographer. Consider:
+- ICONIC CITIES worldwide (Paris, Milan, NYC, Tokyo, Dubai, etc. - or others you know are perfect)
+- ICONIC OUTDOOR LOCATIONS (famous parks, squares, bridges, viewpoints)
+- ICONIC HOTELS & RESTAURANTS (legendary establishments known in fashion)
+- ICONIC MONUMENTS & ARCHITECTURE (world-famous landmarks)  
+- ICONIC INTERIORS (museums, galleries, penthouses, luxury showrooms)
+
+Use your expertise as an art director to select the most suitable iconic location based on the product style, brand positioning, and desired mood. Don't be limited to examples - choose what you know will create the most stunning luxury fashion imagery.
 
 Analyze the products and respond now:`;
 
