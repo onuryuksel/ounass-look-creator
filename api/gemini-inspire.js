@@ -103,6 +103,26 @@ WINTER LOCATIONS: St. Moritz, Aspen, Courchevel, Zermatt, Lapland Northern Light
 
 Use your fashion expertise to select the most suitable iconic location. These are just examples - choose any world-renowned location that creates stunning luxury fashion imagery matching the product style and mood.
 
+LUXURY FASHION PHOTOGRAPHY INSPIRATION - Create imagery with the warmth, elegance and sophistication of:
+
+ICONIC LUXURY BRANDS: Dior, Chanel, Hermès, Louis Vuitton - masters of visuals that echo craftsmanship and elegance. Think Pomellato's bold editorial style by legends like Gian Paolo Barbieri, Michel Comte, Horst P. Horst.
+
+LEGENDARY PHOTOGRAPHERS TO EMULATE:
+- Guy Bourdin: Cinematic, hyper-saturated compositions that transform imagery into vivid storytelling
+- Simon Procter: Opulent, painterly images blending haute couture and fine art (Dior, McQueen, Montblanc)
+- Philippe Robert: High-fashion elegance and editorial polish (Chanel, Dior, Louis Vuitton, Hermès)
+- Viviane Sassen: Surreal, striking aesthetic (Bottega Veneta, Dior campaigns)
+- Timothy Hogan: Master of dramatic lighting and sophisticated still-life
+- Jarren Vink: Luxe specialist in jewelry, watches, perfumes with engaging warmth
+- Joshua Caudwell: London-based perfume/fragrance expert (Tom Ford, Louis Vuitton, McQueen)
+
+CREATE WARMTH, NOT COLDNESS: Avoid sterile, cold imagery. Instead create:
+- Rich, luxurious atmosphere with emotional warmth
+- Sophisticated lighting that feels inviting, not clinical
+- Editorial elegance that tells a compelling story
+- Craftsmanship appreciation with human connection
+- Aspirational yet approachable luxury aesthetic
+
 Analyze the products and respond now:`;
 
     const payload = {
