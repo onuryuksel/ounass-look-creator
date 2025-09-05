@@ -20,41 +20,50 @@ export default async function handler(req, res) {
     console.log('USER INPUTS:', userInputs);
     console.log('------------------------------------------');
     
-    // Build scene setting from user inputs
-    let sceneSettings = [];
-    if (userInputs.location) sceneSettings.push(`Location: ${userInputs.location}`);
-    if (userInputs.mood) sceneSettings.push(`Mood: ${userInputs.mood}`);
-    if (userInputs.time) sceneSettings.push(`Time: ${userInputs.time}`);
-    if (userInputs.extra) sceneSettings.push(`Extra details: ${userInputs.extra}`);
-    
-    const sceneSettingText = sceneSettings.length > 0 
-      ? `\nSCENE SETTING (from user inputs):\n${sceneSettings.join('\n')}\n`
-      : '';
-    
-    const inspirationPrompt = `You are a professional fashion photographer and creative director. Create a complete lifestyle photoshoot prompt based on the fashion products in these images.
+    // Prepare user inputs for AI Art Director analysis
+    const userInputsText = userInputs ? `
+USER'S PREFERENCES (use these as foundation, but enhance and complete):
+${userInputs.location ? `- Location preference: ${userInputs.location}` : '- Location: (not specified - you decide based on products)'}
+${userInputs.mood ? `- Mood preference: ${userInputs.mood}` : '- Mood: (not specified - you decide based on products)'}
+${userInputs.time ? `- Time preference: ${userInputs.time}` : '- Time: (not specified - you decide based on products)'}
+${userInputs.extra ? `- Extra details: ${userInputs.extra}` : '- Extra details: (not specified - you decide based on products)'}
+` : `
+USER'S PREFERENCES:
+- Location: (not specified - you decide based on products)
+- Mood: (not specified - you decide based on products)
+- Time: (not specified - you decide based on products)
+- Extra details: (not specified - you decide based on products)
+`;
 
-ANALYZE THE PRODUCTS:
-Study the clothing, shoes, accessories, colors, style, formality level, and overall aesthetic of the products shown.
-${sceneSettingText}
-TASK: Generate a complete, professional lifestyle photoshoot prompt that incorporates the user's scene preferences above. The prompt should be ready to use for AI image generation.
+    const inspirationPrompt = `You are a world-class AI Art Director. Analyze the fashion products in these images and create scene settings for a lifestyle photoshoot.
 
-STRUCTURE YOUR RESPONSE AS A COMPLETE PROMPT:
-- Start with "A lifestyle photoshoot featuring..."
-- Include detailed scene description using the user's inputs
-- Describe the model and styling  
-- Specify lighting and photography style
-- Add atmospheric details
-- End with quality modifiers
+ANALYZE THE PRODUCTS FIRST:
+Study the clothing, shoes, accessories, colors, style, formality level, and overall aesthetic.
+
+YOUR TASK:
+${userInputsText}
+
+INSTRUCTIONS:
+1. For fields where user specified preferences: RESPECT their choice but ENHANCE and ENRICH it with professional details
+2. For empty fields: CREATE appropriate suggestions based on the fashion products shown
+3. Make all recommendations cohesive and suitable for the product style
+4. Be specific and detailed - avoid generic answers
+
+RESPOND IN THIS EXACT FORMAT:
+
+LOCATION: [Your detailed answer - if user specified location, enhance it; if not, suggest based on products]
+MOOD: [Your detailed answer - if user specified mood, enrich it; if not, suggest based on products]  
+TIME: [Your detailed answer - if user specified time, enhance it; if not, suggest based on products]
+DETAILS: [Your detailed answer - if user specified details, expand them; if not, suggest based on products]
 
 REQUIREMENTS:
-- Use the user's scene settings as the foundation
-- Make it professional and detailed
-- Include specific photographic terms
-- Make it suitable for AI image generation
-- Incorporate all the fashion products shown
-- Create aspirational, high-end fashion imagery
+- Be highly specific and detailed
+- Make it suitable for luxury fashion photography
+- Consider the product colors, style, and formality
+- Create Instagram-worthy, aspirational content
+- Ensure all 4 fields work together cohesively
 
-Generate a complete lifestyle photoshoot prompt now:`;
+Analyze the products and respond now:`;
 
     const payload = {
       contents: [{
@@ -104,25 +113,70 @@ Generate a complete lifestyle photoshoot prompt now:`;
     
     if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
       const textPart = result.candidates[0].content.parts[0];
+      const aiResponse = textPart.text;
       
-      console.log('--- LIFESTYLE PROMPT GENERATION SUCCESS ---');
-      console.log('Generated prompt (length:', textPart.text?.length, '):', textPart.text);
-      console.log('-------------------------------------------');
+      console.log('--- AI ART DIRECTOR RESPONSE ---');
+      console.log('Raw response:', aiResponse);
+      console.log('-------------------------------');
+      
+      // Parse AI Art Director response
+      const extractField = (fieldName) => {
+        const pattern = new RegExp(`${fieldName}:\\s*(.+?)(?=\\n[A-Z]+:|$)`, 'is');
+        const match = aiResponse.match(pattern);
+        return match ? match[1].trim() : '';
+      };
+      
+      const sceneSettings = {
+        location: extractField('LOCATION'),
+        mood: extractField('MOOD'),
+        time: extractField('TIME'),
+        details: extractField('DETAILS')
+      };
+      
+      console.log('--- EXTRACTED SCENE SETTINGS ---');
+      console.log('Location:', sceneSettings.location);
+      console.log('Mood:', sceneSettings.mood);
+      console.log('Time:', sceneSettings.time);
+      console.log('Details:', sceneSettings.details);
+      console.log('--------------------------------');
+      
+      // Create structured lifestyle prompt
+      const structuredPrompt = `A photorealistic lifestyle photograph of a fashion model.
+
+CRITICAL REQUIREMENT - PRODUCT PRESERVATION:
+The model MUST wear the EXACT products from the provided reference images. These products are NOT to be used as inspiration - they are to be REPLICATED PERFECTLY with zero modifications.
+
+PRODUCT SPECIFICATIONS:
+[Products will be inserted here by the frontend]
+
+SCENE SETTING:
+Location: ${sceneSettings.location || 'A stylish modern setting'}
+Mood: ${sceneSettings.mood || 'Sophisticated and elegant'}
+Time of the day: ${sceneSettings.time || 'Golden hour lighting'}
+Details: ${sceneSettings.details || 'Professional styling and composition'}
+
+FINAL INSTRUCTION:
+Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
+      
+      console.log('--- STRUCTURED PROMPT CREATED ---');
+      console.log('Final prompt:', structuredPrompt);
+      console.log('--------------------------------');
       
       return res.json({ 
         success: true, 
-        prompt: textPart.text,
+        prompt: structuredPrompt,
+        sceneSettings: sceneSettings,
         debug: { 
           imageCount: images?.length,
           model: model,
-          promptLength: textPart.text?.length,
-          userInputsUsed: Object.keys(userInputs || {}).length
+          rawResponseLength: aiResponse.length,
+          userInputsProvided: Object.keys(userInputs || {}).filter(key => userInputs[key]?.trim()).length
         }
       });
     } else {
-      console.error('No valid prompt in response:', result);
+      console.error('No valid response from AI Art Director:', result);
       return res.status(500).json({ 
-        error: 'No lifestyle prompt generated',
+        error: 'No scene settings generated by AI Art Director',
         debug: result
       });
     }
