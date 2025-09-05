@@ -48,6 +48,27 @@
       const [currentStep, setCurrentStep] = useState(1);
       const [showLifestyleForm, setShowLifestyleForm] = useState(false);
       const [lifestyleInputs, setLifestyleInputs] = useState({ location: '', mood: '', time: '', extra: '' });
+      const [showTryOnForm, setShowTryOnForm] = useState(false);
+      const [tryOnPhoto, setTryOnPhoto] = useState(null);
+    
+      // Handle try-on photo upload
+      const handleTryOnPhotoUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          // Check file size (10MB limit)
+          if (file.size > 10 * 1024 * 1024) {
+            setError('Photo size must be less than 10MB');
+            return;
+          }
+          
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            setTryOnPhoto(e.target.result);
+            setError(null);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
     
       // Helper function to fetch a URL (retry mechanism removed for simplicity)
       const fetchWithRetry = async (url) => {
@@ -574,8 +595,70 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         }
       };
     
+      // Handles virtual try-on generation
+      const handleTryOnGeneration = async () => {
+        setError(null);
+        setLoadingState('GENERATING_IMAGE');
+        
+        console.log('[Try-On] Starting virtual try-on generation...');
+        const startTime = performance.now();
+        
+        try {
+          // Convert product images to base64
+          const selectedImageUrls = Object.values(selectedImages);
+          const base64Products = await Promise.all(selectedImageUrls.map(urlToBase64));
+          
+          console.log('[Try-On] Sending try-on request...');
+          const response = await fetch('/api/gemini-tryon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userPhoto: tryOnPhoto,
+              productImages: base64Products,
+              productDetails: Object.keys(selectedImages).map(sku => ({
+                sku,
+                name: productImages[sku].name,
+                brand: productImages[sku].brand,
+                category: productImages[sku].category
+              }))
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Virtual try-on failed');
+          }
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            setGeneratedImage(result.image);
+            setCurrentStep(4);
+            const endTime = performance.now();
+            console.log(`[Try-On] Virtual try-on completed in ${Math.round(endTime - startTime)}ms`);
+          } else {
+            throw new Error(result.error || 'Failed to generate try-on image');
+          }
+
+        } catch (error) {
+          console.error('[Try-On] Error:', error);
+          setError(`Virtual try-on failed: ${error.message}`);
+        } finally {
+          setLoadingState('IDLE');
+        }
+      };
+    
       // Handles the final image generation call to the API
       const handleGenerateImage = async () => {
+        // Special handling for try-on
+        if (selectedPrompt === 'tryon') {
+          if (!tryOnPhoto) {
+            setError('Please upload your photo for virtual try-on.');
+            return;
+          }
+          return handleTryOnGeneration();
+        }
+        
         if (!selectedPrompt || !prompts[selectedPrompt]) {
           setError('Please select a prompt.');
           return;
@@ -916,11 +999,89 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                       />
                     )}
                   </div>
+                  
+                  {/* Try On Yourself Option */}
+                  <div>
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="prompt"
+                          value="tryon"
+                          checked={selectedPrompt === 'tryon'}
+                          onChange={(e) => setSelectedPrompt(e.target.value)}
+                          className="form-radio text-blue-600"
+                        />
+                        <span className="font-medium text-lg">Try On Yourself:</span>
+                      </div>
+                      {!showTryOnForm && selectedPrompt === 'tryon' && (
+                        <button
+                          onClick={() => setShowTryOnForm(true)}
+                          className="text-sm p-1 px-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+                        >
+                          Upload Your Photo
+                        </button>
+                      )}
+                    </label>
+                    
+                    {selectedPrompt === 'tryon' && showTryOnForm && (
+                      <div className="bg-blue-50 p-4 mt-2 rounded-lg">
+                        <div className="flex justify-between items-center mb-4">
+                          <div>
+                            <h3 className="font-semibold text-gray-800">Virtual Try-On</h3>
+                            <p className="text-xs text-gray-600 mt-1">Upload your photo to see how these products look on you!</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col space-y-4">
+                          <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleTryOnPhotoUpload}
+                              className="hidden"
+                              id="tryOnPhotoUpload"
+                            />
+                            <label htmlFor="tryOnPhotoUpload" className="cursor-pointer">
+                              {tryOnPhoto ? (
+                                <div className="space-y-2">
+                                  <img src={tryOnPhoto} alt="Your Photo" className="w-32 h-32 object-cover rounded-lg mx-auto" />
+                                  <p className="text-sm text-green-600 font-medium">Photo uploaded successfully!</p>
+                                  <p className="text-xs text-gray-500">Click to change photo</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div className="w-16 h-16 bg-blue-200 rounded-full mx-auto flex items-center justify-center">
+                                    <span className="text-2xl">📷</span>
+                                  </div>
+                                  <p className="text-sm font-medium text-gray-700">Click to upload your photo</p>
+                                  <p className="text-xs text-gray-500">JPG, PNG, or GIF (max 10MB)</p>
+                                </div>
+                              )}
+                            </label>
+                          </div>
+                          
+                          {tryOnPhoto && (
+                            <div className="text-center">
+                              <p className="text-sm text-blue-600 font-medium">Ready for virtual try-on!</p>
+                              <p className="text-xs text-gray-500 mt-1">AI will dress your photo with the selected products</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {selectedPrompt === 'tryon' && !showTryOnForm && (
+                      <div className="bg-gray-100 p-4 mt-2 rounded-lg text-center">
+                        <p className="text-sm text-gray-600">Upload your photo to enable virtual try-on</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-end items-center mt-4">
                   <button
                     onClick={handleGenerateImage}
-                    disabled={loadingState === 'GENERATING_IMAGE'}
+                    disabled={loadingState === 'GENERATING_IMAGE' || (selectedPrompt === 'tryon' && !tryOnPhoto)}
                     className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     {loadingState === 'GENERATING_IMAGE' ? (
@@ -931,7 +1092,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                         </svg>
                         Generating Image...
                       </div>
-                    ) : 'Generate Image'}
+                    ) : (selectedPrompt === 'tryon' ? 'Try On Products' : 'Generate Image')}
                   </button>
                 </div>
               </div>
@@ -996,7 +1157,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.8</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.9</p>
             </div>
     
             {error && (
