@@ -88,7 +88,7 @@ PRODUCT ${index + 1}:
 
     const tryOnPrompt = `${sourceImageDescriptions}
 
-Prompt: Create a high-resolution, realistic image of the subject from Source Image 1. The subject should be wearing ${wearingInstructions}.
+Prompt: Create a high-resolution, realistic image of the subject from Source Image 1. The subject should be ${wearingInstructions}.
 
 Instructions:
 1. CRITICAL: Replace ALL existing clothing with the new clothing items specified above. Remove the current outfit completely.
