@@ -48,37 +48,35 @@ PRODUCT ${index + 1}:
 `;
     });
 
-    const tryOnPrompt = `Virtual Try-On Task: Dress the person in the first image with the clothing items from the subsequent images.
+    // Build dynamic source image descriptions
+    let sourceImageDescriptions = `Source Image 1: [A full-body photograph of a person, against a neutral background].`;
+    
+    productDetails.forEach((product, index) => {
+      const imageNumber = index + 2; // Start from 2 since user photo is 1
+      sourceImageDescriptions += `\nSource Image ${imageNumber}: [A reference image of ${product.name.toLowerCase()}, from "${product.category}" category].`;
+    });
+    
+    // Build dynamic wearing instructions
+    const wearingInstructions = productDetails.map((product, index) => {
+      const imageNumber = index + 2;
+      return `the ${product.name.toLowerCase()} from Source Image ${imageNumber}`;
+    }).join(', ');
 
-STEP 1 - ANALYZE THE USER (First Image):
-- The first image shows the person who will wear the products
-- Keep their face, body shape, skin tone, and pose exactly the same
-- Maintain their background and lighting style
-- This person is your base - they should remain recognizable
+    const tryOnPrompt = `${sourceImageDescriptions}
 
-STEP 2 - IDENTIFY PRODUCTS (Subsequent Images):
+Prompt: Create a high-resolution, realistic image of the subject from Source Image 1. The subject should be wearing ${wearingInstructions}.
+
+Instructions:
+1. Seamlessly integrate the items onto the subject, making sure they are fitted realistically and proportionally to their body.
+2. Ensure the pose, lighting, and background of the original subject (Source Image 1) are maintained.
+3. The new clothing and accessories should replace any items the subject is currently wearing, not be layered on top.
+4. The final image must have consistent shadows, reflections, and fabric textures to appear as a genuine photograph.
+5. Do not alter the subject's face, hair, or surroundings.
+
+Product Details:
 ${productSpecs}
 
-STEP 3 - VIRTUAL STYLING:
-- Replace the person's current clothing with the provided products
-- Fit each item naturally on their body type and pose
-- Ensure proper sizing, draping, and realistic fabric behavior
-- Maintain the person's original pose and stance
-- Keep consistent lighting and shadows
-
-TECHNICAL GOALS:
-- High resolution output (maintain detail quality)
-- Photo-realistic result
-- Natural clothing fit and appearance
-- Seamless integration of products onto the person
-- Professional fashion photography quality
-
-IMPORTANT: 
-- Use the exact person from the first image as your foundation
-- Apply the exact products from the reference images
-- Create a natural, realistic result where the person is wearing the new clothing items
-
-Generate a high-quality image of the person from the first image wearing the specified products.`;
+Generate a professional, photo-realistic image with natural lighting and realistic fabric draping.`;
 
     console.log('--- FINAL TRY-ON PROMPT SENT TO GEMINI-2.5-FLASH-IMAGE-PREVIEW ---');
     console.log('Product count:', productDetails.length);
