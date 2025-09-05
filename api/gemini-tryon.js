@@ -56,22 +56,48 @@ PRODUCT ${index + 1}:
       sourceImageDescriptions += `\nSource Image ${imageNumber}: [A reference image of ${product.name.toLowerCase()}, from "${product.category}" category].`;
     });
     
-    // Build dynamic wearing instructions
-    const wearingInstructions = productDetails.map((product, index) => {
-      const imageNumber = index + 2;
-      return `the ${product.name.toLowerCase()} from Source Image ${imageNumber}`;
-    }).join(', ');
+    // Build dynamic wearing instructions - CLOTHING FIRST, ACCESSORIES LAST
+    const clothingItems = productDetails.filter(p => 
+      p.category.toLowerCase().includes('clothing') || 
+      p.category.toLowerCase().includes('dress') ||
+      p.category.toLowerCase().includes('top') ||
+      p.category.toLowerCase().includes('bottom')
+    );
+    const accessoryItems = productDetails.filter(p => 
+      p.category.toLowerCase().includes('bag') || 
+      p.category.toLowerCase().includes('shoe') ||
+      p.category.toLowerCase().includes('accessory')
+    );
+    
+    // Separate clothing and accessory instructions
+    const clothingInstructions = clothingItems.map((product, index) => {
+      const originalIndex = productDetails.indexOf(product);
+      const imageNumber = originalIndex + 2;
+      return `wearing the ${product.name.toLowerCase()} from Source Image ${imageNumber}`;
+    });
+    
+    const accessoryInstructions = accessoryItems.map((product, index) => {
+      const originalIndex = productDetails.indexOf(product);
+      const imageNumber = originalIndex + 2;
+      return `carrying the ${product.name.toLowerCase()} from Source Image ${imageNumber}`;
+    });
+    
+    // Combine: CLOTHING first, then ACCESSORIES
+    const allInstructions = [...clothingInstructions, ...accessoryInstructions];
+    const wearingInstructions = allInstructions.join(', ');
 
     const tryOnPrompt = `${sourceImageDescriptions}
 
 Prompt: Create a high-resolution, realistic image of the subject from Source Image 1. The subject should be wearing ${wearingInstructions}.
 
 Instructions:
-1. Seamlessly integrate the items onto the subject, making sure they are fitted realistically and proportionally to their body.
-2. Ensure the pose, lighting, and background of the original subject (Source Image 1) are maintained.
-3. The new clothing and accessories should replace any items the subject is currently wearing, not be layered on top.
-4. The final image must have consistent shadows, reflections, and fabric textures to appear as a genuine photograph.
-5. Do not alter the subject's face, hair, or surroundings.
+1. CRITICAL: Replace ALL existing clothing with the new clothing items specified above. Remove the current outfit completely.
+2. Apply accessories (bags, shoes) in addition to the clothing, not as replacements.
+3. Seamlessly integrate all items onto the subject, ensuring realistic fit and proportions.
+4. Maintain the exact pose, lighting, and background of Source Image 1.
+5. Create consistent shadows, reflections, and fabric textures for photorealism.
+6. Do not alter the subject's face, hair, or surroundings.
+7. Prioritize clothing changes over accessory additions.
 
 Product Details:
 ${productSpecs}
