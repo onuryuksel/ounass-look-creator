@@ -1072,75 +1072,76 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                       />
                       <span className="font-medium text-lg">Lifestyle Shoot Prompt</span>
                     </label>
-                    {selectedPrompt === 'lifestyle' && (showLifestyleForm ? (
-                      <div className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full">
-                        <div className="flex justify-between items-center mb-4">
-                          <div>
-                            <h3 className="font-semibold text-gray-800">Lifestyle Scene Details</h3>
-                            <p className="text-xs text-gray-500 mt-1">AI will analyze your selected products to suggest matching scenes</p>
+                    {selectedPrompt === 'lifestyle' && (
+                      <div className="mt-2 space-y-4">
+                        {/* Always show the questions form */}
+                        <div className="bg-gray-100 p-4 rounded-lg text-sm text-gray-700 w-full">
+                          <div className="flex justify-between items-center mb-4">
+                            <div>
+                              <h3 className="font-semibold text-gray-800">Lifestyle Scene Details</h3>
+                              <p className="text-xs text-gray-500 mt-1">AI will analyze your selected products to suggest matching scenes</p>
+                            </div>
+                            <button
+                              onClick={inspireLifestyleInputs}
+                              disabled={loadingState === 'GENERATING_INSPIRATION'}
+                              className="px-3 py-1.5 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                            >
+                              {loadingState === 'GENERATING_INSPIRATION' ? (
+                                <>
+                                  <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <span>Analyzing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>🎨</span>
+                                  <span>Inspire Me</span>
+                                </>
+                              )}
+                            </button>
                           </div>
-                          <button
-                            onClick={inspireLifestyleInputs}
-                            disabled={loadingState === 'GENERATING_INSPIRATION'}
-                            className="px-3 py-1.5 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-                          >
-                            {loadingState === 'GENERATING_INSPIRATION' ? (
-                              <>
-                                <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span>Analyzing...</span>
-                              </>
-                            ) : (
-                              <>
-                                <span>🎨</span>
-                                <span>Inspire Me</span>
-                              </>
-                            )}
-                          </button>
+                          <div className="flex flex-col space-y-2">
+                            <input
+                              type="text"
+                              placeholder="Location (e.g., 'a bustling city street')"
+                              value={lifestyleInputs.location}
+                              onChange={(e) => setLifestyleInputs(prev => ({ ...prev, location: e.target.value }))}
+                              className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Mood (e.g., 'energetic and vibrant')"
+                              value={lifestyleInputs.mood}
+                              onChange={(e) => setLifestyleInputs(prev => ({ ...prev, mood: e.target.value }))}
+                              className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Time of Day (e.g., 'golden hour at sunset')"
+                              value={lifestyleInputs.time}
+                              onChange={(e) => setLifestyleInputs(prev => ({ ...prev, time: e.target.value }))}
+                              className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <textarea
+                              placeholder="Extra details? (e.g., 'rainy weather, with an umbrella')"
+                              value={lifestyleInputs.extra}
+                              onChange={(e) => setLifestyleInputs(prev => ({ ...prev, extra: e.target.value }))}
+                              className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-20"
+                            />
+                          </div>
                         </div>
-                        <div className="flex flex-col space-y-2 mb-4">
-                          <input
-                            type="text"
-                            placeholder="Location (e.g., 'a bustling city street')"
-                            value={lifestyleInputs.location}
-                            onChange={(e) => setLifestyleInputs(prev => ({ ...prev, location: e.target.value }))}
-                            className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Mood (e.g., 'energetic and vibrant')"
-                            value={lifestyleInputs.mood}
-                            onChange={(e) => setLifestyleInputs(prev => ({ ...prev, mood: e.target.value }))}
-                            className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Time of Day (e.g., 'golden hour at sunset')"
-                            value={lifestyleInputs.time}
-                            onChange={(e) => setLifestyleInputs(prev => ({ ...prev, time: e.target.value }))}
-                            className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
+                        
+                        {/* Always show the prompt area */}
+                        <div className="bg-white border-2 border-gray-200 p-4 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 mb-2">Generated Lifestyle Prompt</h4>
                           <textarea
-                            placeholder="Extra details? (e.g., 'rainy weather, with an umbrella')"
-                            value={lifestyleInputs.extra}
-                            onChange={(e) => setLifestyleInputs(prev => ({ ...prev, extra: e.target.value }))}
-                            className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-20"
+                            value={prompts.lifestyle}
+                            onChange={(e) => setPrompts(prev => ({ ...prev, lifestyle: e.target.value }))}
+                            className="w-full h-32 p-3 border border-gray-300 rounded-md text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Click 'Inspire Me' to generate a structured prompt based on your scene details and selected products..."
                           />
                         </div>
-                        <button
-                          onClick={() => generatePrompts(true)}
-                          className="w-full p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
-                        >
-                          Generate Prompt
-                        </button>
                       </div>
-                    ) : (
-                      <textarea
-                        value={prompts.lifestyle}
-                        onChange={(e) => setPrompts(prev => ({ ...prev, lifestyle: e.target.value }))}
-                        className="bg-gray-100 p-4 mt-2 rounded-lg text-sm text-gray-700 w-full h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Click 'Generate Prompt' to create a custom lifestyle prompt based on your inputs..."
-                      />
-                    ))}
+                    )}
                   </div>
                   
                   {/* Try On Yourself Option - Only show with secret access */}
@@ -1291,7 +1292,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.38</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.39</p>
             </div>
     
             {error && (
