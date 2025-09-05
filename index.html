@@ -78,6 +78,71 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       const [currentStep, setCurrentStep] = useState(1);
       const [showLifestyleForm, setShowLifestyleForm] = useState(false);
       const [lifestyleInputs, setLifestyleInputs] = useState({ location: '', mood: '', time: '', extra: '' });
+      const [visualStyle, setVisualStyle] = useState('');
+      
+      // Visual style options
+      const visualStyleOptions = [
+        {
+          value: 'cinematic',
+          label: 'Cinematic',
+          details: 'Shallow depth of field, natural light or directional cinematic lighting, filmic color grading, widescreen framing. Dramatic, storytelling, emotional mood.'
+        },
+        {
+          value: 'minimalist',
+          label: 'Minimalist / Editorial',
+          details: 'Clean backgrounds, neutral or monochrome palettes, precise composition, negative space. Modern, understated elegance.'
+        },
+        {
+          value: 'high-gloss',
+          label: 'High-Gloss Commercial',
+          details: 'Perfectly lit, sharp focus everywhere, bright and vibrant colors, retouched to perfection. Polished, premium, aspirational mood.'
+        },
+        {
+          value: 'dark-moody',
+          label: 'Dark & Moody',
+          details: 'Deep shadows, strong contrast, directional light from one side, rich dark tones. Mysterious, seductive, powerful mood.'
+        },
+        {
+          value: 'lifestyle',
+          label: 'Lifestyle / Aspirational',
+          details: 'Real-life context (dining, travel, work), natural interactions, warm tones. Relatable luxury, "I want to live this life" mood.'
+        },
+        {
+          value: 'avant-garde',
+          label: 'Avant-Garde / Artistic',
+          details: 'Unconventional angles, bold set design, surreal or experimental lighting. Creative, disruptive, memorable mood.'
+        },
+        {
+          value: 'vintage',
+          label: 'Vintage / Filmic',
+          details: 'Film grain, muted tones, warm color cast, retro styling. Nostalgic, romantic, timeless mood.'
+        },
+        {
+          value: 'hyper-real',
+          label: 'Hyper-Real',
+          details: 'Extreme detail, textures pop, high clarity, often focus stacking. Bold, high-impact, "luxury tech" vibe.'
+        },
+        {
+          value: 'documentary',
+          label: 'Documentary / Behind-the-Scenes',
+          details: 'Natural light, candid moments, less retouched but still composed. Authentic, insider access, exclusive mood.'
+        },
+        {
+          value: 'monochromatic',
+          label: 'Monochromatic',
+          details: 'One dominant color in different shades, including product and background. Cohesive, sophisticated, visually striking mood.'
+        },
+        {
+          value: 'conceptual',
+          label: 'Conceptual',
+          details: 'Symbolism, metaphors, unusual objects paired with product. Thought-provoking, gallery-worthy mood.'
+        },
+        {
+          value: 'natural',
+          label: 'Natural / Organic',
+          details: 'Soft sunlight, earthy textures, natural props (stone, wood, foliage). Warm, grounded, artisan luxury mood.'
+        }
+      ];
       const [showTryOnForm, setShowTryOnForm] = useState(false);
       const [tryOnPhoto, setTryOnPhoto] = useState(null);
     
@@ -371,7 +436,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         const { location, mood, time, extra } = lifestyleInputs;
         
         // Check if user has provided at least some input
-        const hasUserInputs = location.trim() || mood.trim() || time.trim() || extra.trim();
+        const hasUserInputs = location.trim() || mood.trim() || time.trim() || extra.trim() || visualStyle;
         
         if (!hasUserInputs) {
           setError('Please fill in at least one field before using your answers');
@@ -379,6 +444,10 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         }
         
         console.log('[Use Exactly] Creating prompt with user answers only');
+        
+        // Get visual style details if selected
+        const selectedVisualStyle = visualStyle ? visualStyleOptions.find(option => option.value === visualStyle) : null;
+        const visualStyleDetails = selectedVisualStyle ? `\n\nVISUAL STYLE:\n${selectedVisualStyle.details}` : '';
         
         // Create structured prompt using exactly user's inputs
         const exactPrompt = `A photorealistic lifestyle photograph of a fashion model.
@@ -393,7 +462,7 @@ SCENE SETTING:
 Location: ${location.trim() || 'A stylish modern setting'}
 Mood: ${mood.trim() || 'Sophisticated and elegant'}
 Time of the day: ${time.trim() || 'Golden hour lighting'}
-Details: ${extra.trim() || 'Professional styling and composition'}
+Details: ${extra.trim() || 'Professional styling and composition'}${visualStyleDetails}
 
 FINAL INSTRUCTION:
 Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
@@ -462,7 +531,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                 location: location.trim(),
                 mood: mood.trim(), 
                 time: time.trim(),
-                extra: extra.trim()
+                extra: extra.trim(),
+                visualStyle: visualStyle
               }
             })
           });
@@ -484,6 +554,19 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               time: result.shortSummaries.time || '',
               extra: result.shortSummaries.details || ''
             });
+            
+            // Update visual style if AI generated one
+            if (result.shortSummaries.visualStyle && !visualStyle) {
+              // Try to find matching visual style from AI recommendation
+              const aiVisualStyle = result.shortSummaries.visualStyle.toLowerCase();
+              const matchingStyle = visualStyleOptions.find(option => 
+                aiVisualStyle.includes(option.value) || 
+                aiVisualStyle.includes(option.label.toLowerCase())
+              );
+              if (matchingStyle) {
+                setVisualStyle(matchingStyle.value);
+              }
+            }
             
             // Set the structured prompt (with full details) to the lifestyle prompt field
             setPrompts(prev => ({
@@ -515,6 +598,9 @@ Location: ${location.trim() || 'A stylish modern setting with professional light
 Mood: ${mood.trim() || 'Sophisticated and elegant atmosphere'}
 Time of the day: ${time.trim() || 'Golden hour with warm, flattering light'}
 Details: ${extra.trim() || 'Professional styling with clean composition and luxury aesthetic'}
+
+VISUAL STYLE:
+${visualStyle ? visualStyleOptions.find(opt => opt.value === visualStyle)?.details || 'Natural, elegant luxury photography with professional lighting and composition' : 'Natural, elegant luxury photography with professional lighting and composition'}
 
 FINAL INSTRUCTION:
 Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
@@ -1151,6 +1237,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                             <button
                               onClick={() => {
                                 setLifestyleInputs({ location: '', mood: '', time: '', extra: '' });
+                                setVisualStyle('');
                                 setPrompts(prev => ({ ...prev, lifestyle: '' }));
                               }}
                               className="px-3 py-1.5 bg-gray-500 text-white text-xs rounded-lg hover:bg-gray-600 transition-all flex items-center space-x-1"
@@ -1187,6 +1274,18 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                               onChange={(e) => setLifestyleInputs(prev => ({ ...prev, extra: e.target.value }))}
                               className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-20"
                             />
+                            <select
+                              value={visualStyle}
+                              onChange={(e) => setVisualStyle(e.target.value)}
+                              className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border border-gray-300"
+                            >
+                              <option value="">Select Visual Style (Optional)</option>
+                              {visualStyleOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                           
                           {/* Action buttons below the form */}
@@ -1380,7 +1479,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.53</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.54</p>
             </div>
     
             {error && (

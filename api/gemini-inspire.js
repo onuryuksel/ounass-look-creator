@@ -20,6 +20,22 @@ export default async function handler(req, res) {
     console.log('USER INPUTS:', userInputs);
     console.log('------------------------------------------');
     
+    // Visual style options mapping
+    const visualStyleDetails = {
+      'cinematic': 'Shallow depth of field, natural light or directional cinematic lighting, filmic color grading, widescreen framing. Dramatic, storytelling, emotional mood.',
+      'minimalist': 'Clean backgrounds, neutral or monochrome palettes, precise composition, negative space. Modern, understated elegance.',
+      'high-gloss': 'Perfectly lit, sharp focus everywhere, bright and vibrant colors, retouched to perfection. Polished, premium, aspirational mood.',
+      'dark-moody': 'Deep shadows, strong contrast, directional light from one side, rich dark tones. Mysterious, seductive, powerful mood.',
+      'lifestyle': 'Real-life context (dining, travel, work), natural interactions, warm tones. Relatable luxury, "I want to live this life" mood.',
+      'avant-garde': 'Unconventional angles, bold set design, surreal or experimental lighting. Creative, disruptive, memorable mood.',
+      'vintage': 'Film grain, muted tones, warm color cast, retro styling. Nostalgic, romantic, timeless mood.',
+      'hyper-real': 'Extreme detail, textures pop, high clarity, often focus stacking. Bold, high-impact, "luxury tech" vibe.',
+      'documentary': 'Natural light, candid moments, less retouched but still composed. Authentic, insider access, exclusive mood.',
+      'monochromatic': 'One dominant color in different shades, including product and background. Cohesive, sophisticated, visually striking mood.',
+      'conceptual': 'Symbolism, metaphors, unusual objects paired with product. Thought-provoking, gallery-worthy mood.',
+      'natural': 'Soft sunlight, earthy textures, natural props (stone, wood, foliage). Warm, grounded, artisan luxury mood.'
+    };
+
     // Prepare user inputs for AI Art Director analysis
     const userInputsText = userInputs ? `
 USER'S PREFERENCES (use these as foundation, but enhance and complete):
@@ -27,12 +43,14 @@ ${userInputs.location ? `- Location preference: ${userInputs.location}` : '- Loc
 ${userInputs.mood ? `- Mood preference: ${userInputs.mood}` : '- Mood: (not specified - you decide based on products)'}
 ${userInputs.time ? `- Time preference: ${userInputs.time}` : '- Time: (not specified - you decide based on products)'}
 ${userInputs.extra ? `- Extra details: ${userInputs.extra}` : '- Extra details: (not specified - you decide based on products)'}
+${userInputs.visualStyle ? `- Visual style preference: ${userInputs.visualStyle} (user selected this specific style)` : '- Visual style: (not specified - you choose the most suitable visual style based on products and scene)'}
 ` : `
 USER'S PREFERENCES:
 - Location: (not specified - you decide based on products)
 - Mood: (not specified - you decide based on products)
 - Time: (not specified - you decide based on products)
 - Extra details: (not specified - you decide based on products)
+- Visual style: (not specified - you choose the most suitable visual style based on products and scene)
 `;
 
     const inspirationPrompt = `You are a world-class AI Art Director. Analyze the fashion products in these images and create scene settings for a lifestyle photoshoot.
@@ -60,6 +78,8 @@ TIME: [If user provided time, ENHANCE with lighting details. If empty, suggest t
 
 DETAILS: [If user provided details, EXPAND with professional elements. If empty, suggest details based on products]
 
+VISUAL_STYLE: [If user selected a visual style, USE IT and enhance with specific technical details. If empty, CHOOSE the most suitable style from: cinematic, minimalist, high-gloss, dark-moody, lifestyle, avant-garde, vintage, hyper-real, documentary, monochromatic, conceptual, natural]
+
 LOCATION_SUMMARY: [4-5 word summary for form field]
 
 MOOD_SUMMARY: [4-5 word summary for form field]
@@ -67,6 +87,8 @@ MOOD_SUMMARY: [4-5 word summary for form field]
 TIME_SUMMARY: [4-5 word summary for form field]
 
 DETAILS_SUMMARY: [4-5 word summary for form field]
+
+VISUAL_STYLE_SUMMARY: [4-5 word summary for form field]
 
 REQUIREMENTS:
 - Be highly specific and detailed
@@ -200,14 +222,16 @@ Analyze the products and respond now:`;
         location: extractField('LOCATION'),
         mood: extractField('MOOD'),
         time: extractField('TIME'),
-        details: extractField('DETAILS')
+        details: extractField('DETAILS'),
+        visualStyle: extractField('VISUAL_STYLE')
       };
       
       const shortSummaries = {
         location: extractField('LOCATION_SUMMARY'),
         mood: extractField('MOOD_SUMMARY'),
         time: extractField('TIME_SUMMARY'),
-        details: extractField('DETAILS_SUMMARY')
+        details: extractField('DETAILS_SUMMARY'),
+        visualStyle: extractField('VISUAL_STYLE_SUMMARY')
       };
       
       console.log('--- EXTRACTED SCENE SETTINGS ---');
@@ -226,7 +250,8 @@ Analyze the products and respond now:`;
         location: sceneSettings.location.replace(/LOCATION_SUMMARY:.*$/gi, '').trim(),
         mood: sceneSettings.mood.replace(/MOOD_SUMMARY:.*$/gi, '').trim(),
         time: sceneSettings.time.replace(/TIME_SUMMARY:.*$/gi, '').trim(),
-        details: sceneSettings.details.replace(/DETAILS_SUMMARY:.*$/gi, '').trim()
+        details: sceneSettings.details.replace(/DETAILS_SUMMARY:.*$/gi, '').trim(),
+        visualStyle: sceneSettings.visualStyle.replace(/VISUAL_STYLE_SUMMARY:.*$/gi, '').trim()
       };
       
       // Create structured lifestyle prompt
@@ -243,6 +268,9 @@ Location: ${cleanSceneSettings.location || 'A stylish modern setting'}
 Mood: ${cleanSceneSettings.mood || 'Sophisticated and elegant'}
 Time of the day: ${cleanSceneSettings.time || 'Golden hour lighting'}
 Details: ${cleanSceneSettings.details || 'Professional styling and composition'}
+
+VISUAL STYLE:
+${cleanSceneSettings.visualStyle || 'Natural, elegant luxury photography with professional lighting and composition'}
 
 FINAL INSTRUCTION:
 Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
