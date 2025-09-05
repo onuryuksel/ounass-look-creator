@@ -103,18 +103,25 @@ PRODUCT ${index + 1}:
 
     const tryOnPrompt = `${sourceImageDescriptions}
 
-Prompt: Create a high-resolution, realistic image of the SAME SINGLE PERSON from Source Image 1. The subject should be ${wearingInstructions}.
+🚨 EMERGENCY INSTRUCTION: ONLY ONE PERSON ALLOWED 🚨
 
-CRITICAL REQUIREMENTS:
-1. SINGLE PERSON ONLY: Show EXACTLY ONE PERSON - the same person from Source Image 1. Do NOT add additional people.
-2. IDENTITY PRESERVATION: The person must maintain identical characteristics:
-   - EXACT same face and facial features
-   - EXACT same skin tone and complexion
-   - EXACT same hair color, length, and style
-   - EXACT same body type and proportions
-   - EXACT same ethnic background and appearance
-3. CLOTHING REPLACEMENT: Replace ALL existing clothing with the new clothing items specified above.
-4. NO NEW PEOPLE: Do not generate additional models, people, or figures in the image.
+SINGLE PERSON VIRTUAL TRY-ON TASK:
+Take the INDIVIDUAL PERSON from Source Image 1 and change their clothing. DO NOT create a group photo. DO NOT add other people. Show ONLY the one person from Source Image 1.
+
+The person should be ${wearingInstructions}.
+
+🚨 ABSOLUTE REQUIREMENTS - NO EXCEPTIONS:
+1. ONLY ONE PERSON: You must show exactly one individual person - the same person from Source Image 1
+2. NO GROUP PHOTOS: Do not create images with multiple people, friends, couples, or groups
+3. NO ADDITIONAL MODELS: Do not add other people, models, or figures to the scene
+4. SINGLE SUBJECT FOCUS: This is a solo portrait of one person wearing new clothes
+5. IDENTITY LOCK: The person must be identical to Source Image 1 (same face, hair, body, skin)
+
+🚨 BANNED ACTIONS:
+- Creating group photos with multiple people
+- Adding friends, companions, or other models
+- Generating couples or pairs of people
+- Creating social scenes with multiple subjects
 
 Instructions:
 1. POSE ADAPTATION: You may adjust the person's pose to better showcase the new clothing items, but maintain their core identity.
