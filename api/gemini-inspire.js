@@ -52,9 +52,16 @@ INSTRUCTIONS:
 RESPOND IN THIS EXACT FORMAT:
 
 LOCATION: [Your detailed answer - if user specified location, enhance it; if not, suggest based on products]
+LOCATION_SUMMARY: [4-5 word summary for form field]
+
 MOOD: [Your detailed answer - if user specified mood, enrich it; if not, suggest based on products]  
+MOOD_SUMMARY: [4-5 word summary for form field]
+
 TIME: [Your detailed answer - if user specified time, enhance it; if not, suggest based on products]
+TIME_SUMMARY: [4-5 word summary for form field]
+
 DETAILS: [Your detailed answer - if user specified details, expand them; if not, suggest based on products]
+DETAILS_SUMMARY: [4-5 word summary for form field]
 
 REQUIREMENTS:
 - Be highly specific and detailed
@@ -133,33 +140,23 @@ Analyze the products and respond now:`;
         details: extractField('DETAILS')
       };
       
-      console.log('--- EXTRACTED SCENE SETTINGS ---');
-      console.log('Location:', sceneSettings.location);
-      console.log('Mood:', sceneSettings.mood);
-      console.log('Time:', sceneSettings.time);
-      console.log('Details:', sceneSettings.details);
-      console.log('--------------------------------');
-      
-      // Create short summaries for form fields (3-4 words max)
-      const createShortSummary = (text) => {
-        if (!text) return '';
-        const words = text.split(' ').slice(0, 4); // Max 4 words
-        return words.join(' ');
-      };
-      
       const shortSummaries = {
-        location: createShortSummary(sceneSettings.location),
-        mood: createShortSummary(sceneSettings.mood),
-        time: createShortSummary(sceneSettings.time),
-        details: createShortSummary(sceneSettings.details)
+        location: extractField('LOCATION_SUMMARY'),
+        mood: extractField('MOOD_SUMMARY'),
+        time: extractField('TIME_SUMMARY'),
+        details: extractField('DETAILS_SUMMARY')
       };
       
-      console.log('--- SHORT SUMMARIES FOR FORM ---');
-      console.log('Location summary:', shortSummaries.location);
-      console.log('Mood summary:', shortSummaries.mood);
-      console.log('Time summary:', shortSummaries.time);
-      console.log('Details summary:', shortSummaries.details);
-      console.log('-------------------------------');
+      console.log('--- EXTRACTED SCENE SETTINGS ---');
+      console.log('Location (full):', sceneSettings.location);
+      console.log('Location (summary):', shortSummaries.location);
+      console.log('Mood (full):', sceneSettings.mood);
+      console.log('Mood (summary):', shortSummaries.mood);
+      console.log('Time (full):', sceneSettings.time);
+      console.log('Time (summary):', shortSummaries.time);
+      console.log('Details (full):', sceneSettings.details);
+      console.log('Details (summary):', shortSummaries.details);
+      console.log('------------------------------------------------');
       
       // Create structured lifestyle prompt
       const structuredPrompt = `A photorealistic lifestyle photograph of a fashion model.

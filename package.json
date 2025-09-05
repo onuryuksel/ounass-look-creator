@@ -1,6 +1,6 @@
 {
   "name": "ounass-look-creator",
-  "version": "1.9.41",
+  "version": "1.9.42",
   "description": "AI-powered outfit generator for Ounass products",
   "scripts": {
     "dev": "echo 'Dev server ready. Push to dev branch for preview deployment.'",
