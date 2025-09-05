@@ -67,6 +67,7 @@ CRITICAL INSTRUCTIONS:
 3. **RESPECT USER VISION**: If user says "café", enhance it to "elegant Parisian café" - don't change it to "museum" or "hotel".
 4. **EMPTY FIELDS ONLY**: Only create completely new suggestions for fields the user left empty.
 5. **COHESIVE ENHANCEMENT**: Make user preferences work together with professional luxury fashion standards.
+6. **VISUAL STYLE HARMONY**: If user selected a visual style, ALL other elements (location, mood, time, details) must complement and enhance that specific visual style aesthetic.
 
 RESPOND IN THIS EXACT FORMAT:
 
@@ -79,6 +80,20 @@ TIME: [If user provided time, ENHANCE with lighting details. If empty, suggest t
 DETAILS: [If user provided details, EXPAND with professional elements. If empty, suggest details based on products]
 
 VISUAL_STYLE: [If user selected a visual style, USE IT and enhance with specific technical details. If empty, CHOOSE the most suitable style from: cinematic, minimalist, high-gloss, dark-moody, lifestyle, avant-garde, vintage, hyper-real, documentary, monochromatic, conceptual, natural]
+
+VISUAL STYLE GUIDANCE FOR SCENE HARMONY:
+- **Cinematic**: Choose dramatic locations (film studios, iconic landmarks), golden hour/blue hour timing, emotional moods
+- **Minimalist**: Select clean, simple spaces (modern galleries, white studios), neutral moods, controlled lighting
+- **High-Gloss**: Prefer luxury retail spaces (flagship stores, hotels), bright lighting, aspirational moods
+- **Dark & Moody**: Choose intimate, shadowy locations (night scenes, dark interiors), low-key lighting, mysterious moods
+- **Lifestyle**: Real-world settings (cafés, homes, streets), natural lighting, relatable moods
+- **Avant-Garde**: Unusual, artistic locations (contemporary museums, experimental spaces), creative lighting, bold moods
+- **Vintage**: Historic locations (classic hotels, old buildings), warm/nostalgic lighting, romantic moods
+- **Hyper-Real**: High-tech environments (modern architecture, luxury showrooms), perfect lighting, precision moods
+- **Documentary**: Authentic locations (workshops, behind-scenes), natural lighting, candid moods
+- **Monochromatic**: Color-coordinated environments, unified lighting, cohesive moods
+- **Conceptual**: Symbolic locations (art installations, metaphorical spaces), creative lighting, thought-provoking moods
+- **Natural**: Outdoor/organic locations (gardens, natural settings), soft lighting, warm moods
 
 LOCATION_SUMMARY: [4-5 word summary for form field]
 

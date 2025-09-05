@@ -555,8 +555,9 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               extra: result.shortSummaries.details || ''
             });
             
-            // Update visual style if AI generated one
+            // Update visual style ONLY if user didn't select one and AI generated one
             if (result.shortSummaries.visualStyle && !visualStyle) {
+              console.log('[AI Art Director] AI recommends visual style:', result.shortSummaries.visualStyle);
               // Try to find matching visual style from AI recommendation
               const aiVisualStyle = result.shortSummaries.visualStyle.toLowerCase();
               const matchingStyle = visualStyleOptions.find(option => 
@@ -565,7 +566,10 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               );
               if (matchingStyle) {
                 setVisualStyle(matchingStyle.value);
+                console.log('[AI Art Director] ✅ Visual style set to:', matchingStyle.value);
               }
+            } else if (visualStyle) {
+              console.log('[AI Art Director] ✅ User visual style preserved:', visualStyle);
             }
             
             // Set the structured prompt (with full details) to the lifestyle prompt field
@@ -1479,7 +1483,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.54</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.55</p>
             </div>
     
             {error && (
