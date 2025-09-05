@@ -31,22 +31,24 @@ export default async function handler(req, res) {
       return `- Image ${index + 2}: ${product.name} by ${product.brand} (${product.category})`;
     }).join('\n');
 
-    const promptGenerationRequest = `I need you to write a simple, clear virtual try-on prompt.
+    const promptGenerationRequest = `I need you to write a virtual try-on prompt for an AI image generation model.
 
-USER PHOTO: Image 1 (the person who will try on the clothes)
+TASK: Virtual try-on (NOT a new photoshoot)
+USER PHOTO: Image 1 (the person who will try on the clothes - keep their exact background, pose, and setting)
 
-PRODUCTS TO COMBINE:
+PRODUCTS TO APPLY:
 ${productList}
 
-Please write a natural, conversational prompt that asks to combine these specific products onto the person in Image 1. Use a style similar to:
+Please write a natural prompt that emphasizes this is a VIRTUAL TRY-ON task. Use a style similar to:
 
-"I'd like you to combine the [product name] (Image X), the [product name] (Image Y), and the [product name] (Image Z) onto the person in Image 1."
+"This is a virtual try-on task. Please put the [product name] (Image X), the [product name] (Image Y), and the [product name] (Image Z) onto the person in Image 1. Keep the same background, setting, and pose from Image 1."
 
-Keep it simple, direct, and natural. Focus on:
-- Using the exact person from Image 1
-- Combining the specific products listed
-- Maintaining a natural, conversational tone
-- Being clear about which image contains which item
+CRITICAL REQUIREMENTS for the prompt:
+- Emphasize this is "virtual try-on" not a new photoshoot
+- Specify to keep the original background and setting from Image 1
+- Mention maintaining the person's original pose and environment
+- Use "put on" or "apply" instead of just "wearing"
+- Be clear this is clothing replacement, not scene creation
 
 Write only the prompt, nothing else.`;
 
