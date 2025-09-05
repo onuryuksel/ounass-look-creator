@@ -37,15 +37,19 @@
 
     // The main App component containing all logic and UI
     const App = () => {
-      // Check for secret access parameter
+      // Environment and access control
       const urlParams = new URLSearchParams(window.location.search);
-      const isTryOnEnabled = urlParams.has('secretaccess');
+      const isDevEnvironment = window.location.hostname.includes('git-dev-') || window.location.hostname === 'localhost';
+      const hasSecretAccess = urlParams.has('secretaccess');
+      const isTryOnEnabled = isDevEnvironment || hasSecretAccess;
       
-      // Debug log for secret access
-      if (isTryOnEnabled) {
-        console.log('🔓 SECRET ACCESS ENABLED: Try On Yourself feature is available');
+      // Debug log for access control
+      if (isDevEnvironment) {
+        console.log('🔧 DEV ENVIRONMENT: Try On Yourself feature always enabled');
+      } else if (hasSecretAccess) {
+        console.log('🔓 SECRET ACCESS ENABLED: Try On Yourself feature available via URL parameter');
       } else {
-        console.log('🔒 Try On Yourself feature disabled (add ?secretaccess to URL to enable)');
+        console.log('🔒 PRODUCTION: Try On Yourself feature disabled (add ?secretaccess to URL to enable)');
       }
       
       const [skus, setSkus] = useState(['', '']);
@@ -1280,7 +1284,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.35</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.36</p>
             </div>
     
             {error && (
