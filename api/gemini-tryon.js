@@ -64,9 +64,10 @@ PRODUCT ${index + 1}:
     }
 
     // Log prompt details
-    console.log('--- NEW SIMPLE PROMPT APPROACH ---');
-    console.log('Products:', productDescriptions);
+    console.log('--- TWO-STAGE AI PROMPT APPROACH ---');
+    console.log('Generated prompt used:', !!generatedPrompt);
     console.log('Final prompt length:', tryOnPrompt.length);
+    console.log('Final prompt:', tryOnPrompt);
     console.log('--- END PROMPT INFO ---');
 
     console.log('--- FINAL TRY-ON PROMPT SENT TO GEMINI-2.5-FLASH-IMAGE-PREVIEW ---');
