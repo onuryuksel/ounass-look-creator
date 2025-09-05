@@ -43,24 +43,25 @@ Study the clothing, shoes, accessories, colors, style, formality level, and over
 YOUR TASK:
 ${userInputsText}
 
-INSTRUCTIONS:
-1. For fields where user specified preferences: RESPECT their choice but ENHANCE and ENRICH it with professional details
-2. For empty fields: CREATE appropriate suggestions based on the fashion products shown
-3. Make all recommendations cohesive and suitable for the product style
-4. Be specific and detailed - avoid generic answers
+CRITICAL INSTRUCTIONS:
+1. **USER PREFERENCES ARE MANDATORY**: If user specified ANY preference, you MUST use it as the core foundation. DO NOT ignore or replace user inputs.
+2. **ENHANCE, DON'T REPLACE**: When user provides input, ENHANCE and ENRICH it with professional details, but KEEP their core concept.
+3. **RESPECT USER VISION**: If user says "café", enhance it to "elegant Parisian café" - don't change it to "museum" or "hotel".
+4. **EMPTY FIELDS ONLY**: Only create completely new suggestions for fields the user left empty.
+5. **COHESIVE ENHANCEMENT**: Make user preferences work together with professional luxury fashion standards.
 
 RESPOND IN THIS EXACT FORMAT:
 
-LOCATION: [Your detailed answer - if user specified location, enhance it; if not, suggest based on products]
+LOCATION: [If user provided location, ENHANCE their choice with luxury details. If empty, suggest iconic location based on products]
 LOCATION_SUMMARY: [4-5 word summary for form field]
 
-MOOD: [Your detailed answer - if user specified mood, enrich it; if not, suggest based on products]  
+MOOD: [If user provided mood, ENRICH their vision with professional atmosphere. If empty, suggest mood based on products]  
 MOOD_SUMMARY: [4-5 word summary for form field]
 
-TIME: [Your detailed answer - if user specified time, enhance it; if not, suggest based on products]
+TIME: [If user provided time, ENHANCE with lighting details. If empty, suggest time based on products]
 TIME_SUMMARY: [4-5 word summary for form field]
 
-DETAILS: [Your detailed answer - if user specified details, expand them; if not, suggest based on products]
+DETAILS: [If user provided details, EXPAND with professional elements. If empty, suggest details based on products]
 DETAILS_SUMMARY: [4-5 word summary for form field]
 
 REQUIREMENTS:
