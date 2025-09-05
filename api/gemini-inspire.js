@@ -70,6 +70,17 @@ REQUIREMENTS:
 - Create Instagram-worthy, aspirational content
 - Ensure all 4 fields work together cohesively
 
+CRITICAL FOR LOCATIONS - This is a LUXURY BRAND fashion shoot, choose ICONIC locations:
+- ICONIC CITIES: Paris, Milan, New York, Tokyo, Dubai, London, Monaco, Beverly Hills
+- ICONIC OUTDOOR LOCATIONS: Central Park NYC, Trocadéro Paris, Hyde Park London, Shibuya Crossing Tokyo
+- ICONIC HOTELS: Ritz Paris, Plaza Hotel NYC, Burj Al Arab Dubai, Claridge's London, Hotel George V Paris
+- ICONIC RESTAURANTS: Café de Flore Paris, The Ivy London, Nobu Malibu, La Bernardin NYC
+- ICONIC MONUMENTS: Eiffel Tower, Big Ben, Empire State Building, Burj Khalifa, Colosseum
+- ICONIC SQUARES: Times Square, Trafalgar Square, Piazza del Duomo, Red Square
+- ICONIC INTERIORS: Museum galleries, luxury penthouses, designer showrooms, high-end boutiques
+
+Choose locations that match luxury fashion brand standards and product sophistication level.
+
 Analyze the products and respond now:`;
 
     const payload = {
