@@ -116,7 +116,7 @@ Generate a professional, photo-realistic image with natural lighting and realist
         ]
       }],
       generationConfig: {
-        responseModalities: ["IMAGE"]
+        responseModalities: ["TEXT", "IMAGE"]
       }
     };
     
@@ -236,9 +236,23 @@ Generate a professional, photo-realistic image with natural lighting and realist
         }
       });
     } else {
+      console.log('❌ No try-on image data found in response');
+      
+      // Check if there's text response explaining why
+      let aiTextResponse = '';
+      if (result.candidates?.[0]?.content?.parts) {
+        const textParts = result.candidates[0].content.parts.filter(part => part.text);
+        if (textParts.length > 0) {
+          aiTextResponse = textParts.map(part => part.text).join(' ');
+          console.log('❌ AI returned text instead of image:');
+          console.log(aiTextResponse);
+        }
+      }
+      
       console.error('No valid image in try-on response:', result);
       return res.status(500).json({ 
         error: 'No try-on image received from AI',
+        aiResponse: aiTextResponse,
         debug: result
       });
     }
