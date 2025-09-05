@@ -53,15 +53,19 @@ CRITICAL INSTRUCTIONS:
 RESPOND IN THIS EXACT FORMAT:
 
 LOCATION: [If user provided location, ENHANCE their choice with luxury details. If empty, suggest iconic location based on products]
-LOCATION_SUMMARY: [4-5 word summary for form field]
 
 MOOD: [If user provided mood, ENRICH their vision with professional atmosphere. If empty, suggest mood based on products]  
-MOOD_SUMMARY: [4-5 word summary for form field]
 
 TIME: [If user provided time, ENHANCE with lighting details. If empty, suggest time based on products]
-TIME_SUMMARY: [4-5 word summary for form field]
 
 DETAILS: [If user provided details, EXPAND with professional elements. If empty, suggest details based on products]
+
+LOCATION_SUMMARY: [4-5 word summary for form field]
+
+MOOD_SUMMARY: [4-5 word summary for form field]
+
+TIME_SUMMARY: [4-5 word summary for form field]
+
 DETAILS_SUMMARY: [4-5 word summary for form field]
 
 REQUIREMENTS:
