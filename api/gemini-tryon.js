@@ -92,17 +92,23 @@ Prompt: Create a high-resolution, realistic image of the SAME SINGLE PERSON from
 
 CRITICAL REQUIREMENTS:
 1. SINGLE PERSON ONLY: Show EXACTLY ONE PERSON - the same person from Source Image 1. Do NOT add additional people.
-2. SAME IDENTITY: The person must be identical to Source Image 1 - same face, same body, same identity.
+2. IDENTITY PRESERVATION: The person must maintain identical characteristics:
+   - EXACT same face and facial features
+   - EXACT same skin tone and complexion
+   - EXACT same hair color, length, and style
+   - EXACT same body type and proportions
+   - EXACT same ethnic background and appearance
 3. CLOTHING REPLACEMENT: Replace ALL existing clothing with the new clothing items specified above.
 4. NO NEW PEOPLE: Do not generate additional models, people, or figures in the image.
 
 Instructions:
-1. Apply accessories (bags, shoes) in addition to the clothing, not as replacements.
-2. Seamlessly integrate all items onto the subject, ensuring realistic fit and proportions.
-3. Maintain the exact pose, lighting, and background of Source Image 1.
-4. Create consistent shadows, reflections, and fabric textures for photorealism.
-5. Do not alter the subject's face, hair, or surroundings.
-6. Keep the same single-person composition as Source Image 1.
+1. POSE ADAPTATION: You may adjust the person's pose to better showcase the new clothing items, but maintain their core identity.
+2. Apply accessories (bags, shoes) in addition to the clothing, not as replacements.
+3. Seamlessly integrate all items onto the subject, ensuring realistic fit and proportions.
+4. Maintain similar lighting and background style from Source Image 1 (background can be adjusted if needed for better product display).
+5. Create consistent shadows, reflections, and fabric textures for photorealism.
+6. NEVER alter the subject's face, hair color/length, skin tone, or core physical characteristics.
+7. Keep the same single-person composition as Source Image 1.
 
 Product Details:
 ${productSpecs}
