@@ -66,25 +66,40 @@ PRODUCT ${index + 1}:
     const accessoryItems = productDetails.filter(p => 
       p.category.toLowerCase().includes('bag') || 
       p.category.toLowerCase().includes('shoe') ||
-      p.category.toLowerCase().includes('accessory')
+      p.category.toLowerCase().includes('accessory') ||
+      p.category.toLowerCase().includes('clutch') ||
+      p.category.toLowerCase().includes('handbag') ||
+      p.category.toLowerCase().includes('shoulder') ||
+      p.category.toLowerCase().includes('tote') ||
+      p.category.toLowerCase().includes('handle')
     );
     
     // Separate clothing and accessory instructions
-    const clothingInstructions = clothingItems.map((product, index) => {
+    const clothingInstructions = clothingItems.map((product) => {
       const originalIndex = productDetails.indexOf(product);
       const imageNumber = originalIndex + 2;
       return `wearing the ${product.name.toLowerCase()} from Source Image ${imageNumber}`;
     });
     
-    const accessoryInstructions = accessoryItems.map((product, index) => {
+    const accessoryInstructions = accessoryItems.map((product) => {
       const originalIndex = productDetails.indexOf(product);
       const imageNumber = originalIndex + 2;
       return `carrying the ${product.name.toLowerCase()} from Source Image ${imageNumber}`;
     });
     
+    // Debug logging
+    console.log('PRODUCT FILTERING DEBUG:');
+    console.log('All products:', productDetails.map(p => `${p.name} - ${p.category}`));
+    console.log('Clothing items:', clothingItems.map(p => `${p.name} - ${p.category}`));
+    console.log('Accessory items:', accessoryItems.map(p => `${p.name} - ${p.category}`));
+    console.log('Clothing instructions:', clothingInstructions);
+    console.log('Accessory instructions:', accessoryInstructions);
+    
     // Combine: CLOTHING first, then ACCESSORIES
     const allInstructions = [...clothingInstructions, ...accessoryInstructions];
     const wearingInstructions = allInstructions.join(', ');
+    
+    console.log('Final wearing instructions:', wearingInstructions);
 
     const tryOnPrompt = `${sourceImageDescriptions}
 
