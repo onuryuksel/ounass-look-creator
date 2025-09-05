@@ -185,9 +185,15 @@ Analyze the products and respond now:`;
       
       // Parse AI Art Director response
       const extractField = (fieldName) => {
-        const pattern = new RegExp(`${fieldName}:\\s*(.+?)(?=\\n[A-Z]+:|$)`, 'is');
+        // More precise extraction to avoid mixing content
+        const pattern = new RegExp(`^${fieldName}:\\s*(.+?)(?=\\n\\n|\\n[A-Z_]+:|$)`, 'im');
         const match = aiResponse.match(pattern);
-        return match ? match[1].trim() : '';
+        let result = match ? match[1].trim() : '';
+        
+        // Clean up any summary tags that might have leaked in
+        result = result.replace(/_SUMMARY:.*$/g, '').trim();
+        
+        return result;
       };
       
       const sceneSettings = {
@@ -215,6 +221,14 @@ Analyze the products and respond now:`;
       console.log('Details (summary):', shortSummaries.details);
       console.log('------------------------------------------------');
       
+      // Clean scene settings from any potential summary contamination
+      const cleanSceneSettings = {
+        location: sceneSettings.location.replace(/LOCATION_SUMMARY:.*$/gi, '').trim(),
+        mood: sceneSettings.mood.replace(/MOOD_SUMMARY:.*$/gi, '').trim(),
+        time: sceneSettings.time.replace(/TIME_SUMMARY:.*$/gi, '').trim(),
+        details: sceneSettings.details.replace(/DETAILS_SUMMARY:.*$/gi, '').trim()
+      };
+      
       // Create structured lifestyle prompt
       const structuredPrompt = `A photorealistic lifestyle photograph of a fashion model.
 
@@ -225,10 +239,10 @@ PRODUCT SPECIFICATIONS:
 [Products will be inserted here by the frontend]
 
 SCENE SETTING:
-Location: ${sceneSettings.location || 'A stylish modern setting'}
-Mood: ${sceneSettings.mood || 'Sophisticated and elegant'}
-Time of the day: ${sceneSettings.time || 'Golden hour lighting'}
-Details: ${sceneSettings.details || 'Professional styling and composition'}
+Location: ${cleanSceneSettings.location || 'A stylish modern setting'}
+Mood: ${cleanSceneSettings.mood || 'Sophisticated and elegant'}
+Time of the day: ${cleanSceneSettings.time || 'Golden hour lighting'}
+Details: ${cleanSceneSettings.details || 'Professional styling and composition'}
 
 FINAL INSTRUCTION:
 Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided.`;
