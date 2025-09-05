@@ -48,106 +48,38 @@ PRODUCT ${index + 1}:
 `;
     });
 
-    // Build dynamic source image descriptions
-    let sourceImageDescriptions = `Source Image 1: [A full-body photograph of a person, against a neutral background].`;
-    
-    productDetails.forEach((product, index) => {
-      const imageNumber = index + 2; // Start from 2 since user photo is 1
-      sourceImageDescriptions += `\nSource Image ${imageNumber}: [A reference image of ${product.name.toLowerCase()}, from "${product.category}" category].`;
-    });
-    
-    // Build dynamic wearing instructions - CLOTHING FIRST, ACCESSORIES LAST
-    const clothingItems = productDetails.filter(p => 
-      p.category.toLowerCase().includes('clothing') || 
-      p.category.toLowerCase().includes('dress') ||
-      p.category.toLowerCase().includes('top') ||
-      p.category.toLowerCase().includes('bottom')
-    );
-    const accessoryItems = productDetails.filter(p => 
-      p.category.toLowerCase().includes('bag') || 
-      p.category.toLowerCase().includes('shoe') ||
-      p.category.toLowerCase().includes('accessory') ||
-      p.category.toLowerCase().includes('clutch') ||
-      p.category.toLowerCase().includes('handbag') ||
-      p.category.toLowerCase().includes('shoulder') ||
-      p.category.toLowerCase().includes('tote') ||
-      p.category.toLowerCase().includes('handle')
-    );
-    
-    // Separate clothing and accessory instructions
-    const clothingInstructions = clothingItems.map((product) => {
-      const originalIndex = productDetails.indexOf(product);
-      const imageNumber = originalIndex + 2;
-      return `wearing the ${product.name.toLowerCase()} from Source Image ${imageNumber}`;
-    });
-    
-    const accessoryInstructions = accessoryItems.map((product) => {
-      const originalIndex = productDetails.indexOf(product);
-      const imageNumber = originalIndex + 2;
-      return `carrying the ${product.name.toLowerCase()} from Source Image ${imageNumber}`;
-    });
-    
-    // Debug logging
-    console.log('PRODUCT FILTERING DEBUG:');
-    console.log('All products:', productDetails.map(p => `${p.name} - ${p.category}`));
-    console.log('Clothing items:', clothingItems.map(p => `${p.name} - ${p.category}`));
-    console.log('Accessory items:', accessoryItems.map(p => `${p.name} - ${p.category}`));
-    console.log('Clothing instructions:', clothingInstructions);
-    console.log('Accessory instructions:', accessoryInstructions);
-    
-    // Combine: CLOTHING first, then ACCESSORIES
-    const allInstructions = [...clothingInstructions, ...accessoryInstructions];
-    const wearingInstructions = allInstructions.join(', ');
-    
-    console.log('Final wearing instructions:', wearingInstructions);
+    // Create detailed product descriptions for the prompt
+    const productDescriptions = productDetails.map((product, index) => {
+      return `${product.name} by ${product.brand} (${product.category})`;
+    }).join(', ');
 
-    const tryOnPrompt = `${sourceImageDescriptions}
+    // Build simple, direct prompt
+    const tryOnPrompt = `I need to perform a virtual try-on task. 
 
-🚨 EMERGENCY INSTRUCTION: ONLY ONE PERSON ALLOWED 🚨
+TASK: Take the person in the first image and dress them with the products shown in the following images.
 
-SINGLE PERSON VIRTUAL TRY-ON TASK:
-Take the INDIVIDUAL PERSON from Source Image 1 and change their clothing. DO NOT create a group photo. DO NOT add other people. Show ONLY the one person from Source Image 1.
+PERSON: Use the exact person from the first image - same face, same body, same hair, same skin tone.
 
-The person should be ${wearingInstructions}.
+PRODUCTS TO ADD: ${productDescriptions}
 
-🚨 ABSOLUTE REQUIREMENTS - NO EXCEPTIONS:
-1. ONLY ONE PERSON: You must show exactly one individual person - the same person from Source Image 1
-2. NO GROUP PHOTOS: Do not create images with multiple people, friends, couples, or groups
-3. NO ADDITIONAL MODELS: Do not add other people, models, or figures to the scene
-4. SINGLE SUBJECT FOCUS: This is a solo portrait of one person wearing new clothes
-5. IDENTITY LOCK: The person must be identical to Source Image 1 (same face, hair, body, skin)
+INSTRUCTIONS:
+- Replace their current clothing with the new items
+- Keep the same person (do not change their appearance)  
+- Show only ONE person in the final image
+- Make the clothing fit naturally on their body
+- Add accessories like bags without replacing clothing
+- Keep realistic lighting and shadows
+- Maintain photo-realistic quality
 
-🚨 BANNED ACTIONS:
-- Creating group photos with multiple people
-- Adding friends, companions, or other models
-- Generating couples or pairs of people
-- Creating social scenes with multiple subjects
+CRITICAL: This must be a single person wearing new clothes, not multiple people.
 
-Instructions:
-1. POSE ADAPTATION: You may adjust the person's pose to better showcase the new clothing items, but maintain their core identity.
-2. Apply accessories (bags, shoes) in addition to the clothing, not as replacements.
-3. Seamlessly integrate all items onto the subject, ensuring realistic fit and proportions.
-4. Maintain similar lighting and background style from Source Image 1 (background can be adjusted if needed for better product display).
-5. Create consistent shadows, reflections, and fabric textures for photorealism.
-6. NEVER alter the subject's face, hair color/length, skin tone, or core physical characteristics.
-7. Keep the same single-person composition as Source Image 1.
+Generate a high-quality fashion photograph of the same person wearing the specified items.`;
 
-Product Details:
-${productSpecs}
-
-Generate a professional, photo-realistic image with natural lighting and realistic fabric draping.`;
-
-    // CRITICAL: Verify prompt was generated correctly
-    console.log('--- PROMPT GENERATION VERIFICATION ---');
-    console.log('Source image descriptions length:', sourceImageDescriptions.length);
-    console.log('Wearing instructions length:', wearingInstructions.length);
-    console.log('Product specs length:', productSpecs.length);
+    // Log prompt details
+    console.log('--- NEW SIMPLE PROMPT APPROACH ---');
+    console.log('Products:', productDescriptions);
     console.log('Final prompt length:', tryOnPrompt.length);
-    if (tryOnPrompt.length < 100) {
-      console.error('🚨 CRITICAL: Prompt seems too short!');
-      console.error('🚨 This suggests prompt generation failed!');
-    }
-    console.log('--- END PROMPT VERIFICATION ---');
+    console.log('--- END PROMPT INFO ---');
 
     console.log('--- FINAL TRY-ON PROMPT SENT TO GEMINI-2.5-FLASH-IMAGE-PREVIEW ---');
     console.log('Product count:', productDetails.length);
