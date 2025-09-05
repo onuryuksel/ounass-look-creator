@@ -37,6 +37,17 @@
 
     // The main App component containing all logic and UI
     const App = () => {
+      // Check for secret access parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const isTryOnEnabled = urlParams.has('secretaccess');
+      
+      // Debug log for secret access
+      if (isTryOnEnabled) {
+        console.log('🔓 SECRET ACCESS ENABLED: Try On Yourself feature is available');
+      } else {
+        console.log('🔒 Try On Yourself feature disabled (add ?secretaccess to URL to enable)');
+      }
+      
       const [skus, setSkus] = useState(['', '']);
       const [productImages, setProductImages] = useState({});
       const [selectedImages, setSelectedImages] = useState({});
@@ -1121,24 +1132,25 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                     ))}
                   </div>
                   
-                  {/* Try On Yourself Option */}
-                  <div>
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="prompt"
-                        value="tryon"
-                        checked={selectedPrompt === 'tryon'}
-                        onChange={(e) => {
-                          setSelectedPrompt(e.target.value);
-                          if (e.target.value === 'tryon') {
-                            setShowTryOnForm(true);
-                          }
-                        }}
-                        className="form-radio text-blue-600"
-                      />
-                      <span className="font-medium text-lg">Try On Yourself</span>
-                    </label>
+                  {/* Try On Yourself Option - Only show with secret access */}
+                  {isTryOnEnabled && (
+                    <div>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="prompt"
+                          value="tryon"
+                          checked={selectedPrompt === 'tryon'}
+                          onChange={(e) => {
+                            setSelectedPrompt(e.target.value);
+                            if (e.target.value === 'tryon') {
+                              setShowTryOnForm(true);
+                            }
+                          }}
+                          className="form-radio text-blue-600"
+                        />
+                        <span className="font-medium text-lg">Try On Yourself</span>
+                      </label>
                     
                     {selectedPrompt === 'tryon' && (
                       <div className="bg-blue-50 p-4 mt-2 rounded-lg">
@@ -1186,7 +1198,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                         </div>
                       </div>
                     )}
-                  </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-end items-center mt-4">
                   <button
@@ -1267,7 +1280,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.34</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.35</p>
             </div>
     
             {error && (
