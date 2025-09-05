@@ -51,20 +51,57 @@
       const [showTryOnForm, setShowTryOnForm] = useState(false);
       const [tryOnPhoto, setTryOnPhoto] = useState(null);
     
-      // Handle try-on photo upload
+      // Handle try-on photo upload with compression
       const handleTryOnPhotoUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
-          // Check file size (10MB limit)
-          if (file.size > 10 * 1024 * 1024) {
-            setError('Photo size must be less than 10MB');
+          // Check file size (5MB limit for try-on)
+          if (file.size > 5 * 1024 * 1024) {
+            setError('Photo size must be less than 5MB for try-on');
             return;
           }
           
+          // Create image element for compression
+          const img = new Image();
+          img.onload = () => {
+            // Create canvas for compression
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate new dimensions (max 1024px on longest side)
+            const maxSize = 1024;
+            let { width, height } = img;
+            
+            if (width > height) {
+              if (width > maxSize) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to base64 with compression (0.7 quality)
+            const compressedDataURL = canvas.toDataURL('image/jpeg', 0.7);
+            
+            console.log(`[Photo Compression] Original: ${file.size} bytes, Compressed: ${compressedDataURL.length} chars`);
+            
+            setTryOnPhoto(compressedDataURL);
+            setError(null);
+          };
+          
           const reader = new FileReader();
           reader.onload = (e) => {
-            setTryOnPhoto(e.target.result);
-            setError(null);
+            img.src = e.target.result;
           };
           reader.readAsDataURL(file);
         }
@@ -595,6 +632,41 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         }
       };
     
+      // Compress base64 image for API efficiency
+      const compressBase64Image = async (base64String, maxSize = 512, quality = 0.6) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate new dimensions
+            let { width, height } = img;
+            
+            if (width > height) {
+              if (width > maxSize) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const compressed = canvas.toDataURL('image/jpeg', quality);
+            console.log(`[Compression] ${img.width}x${img.height} → ${width}x${height}, Quality: ${quality}`);
+            resolve(compressed);
+          };
+          img.src = base64String;
+        });
+      };
+    
       // Handles virtual try-on generation
       const handleTryOnGeneration = async () => {
         setError(null);
@@ -604,9 +676,14 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         const startTime = performance.now();
         
         try {
-          // Convert product images to base64
+          // Convert product images to base64 with compression
           const selectedImageUrls = Object.values(selectedImages);
-          const base64Products = await Promise.all(selectedImageUrls.map(urlToBase64));
+          console.log(`[Try-On] Compressing ${selectedImageUrls.length} product images...`);
+          
+          const base64Products = await Promise.all(selectedImageUrls.map(async (url) => {
+            const originalBase64 = await urlToBase64(url);
+            return await compressBase64Image(originalBase64, 512, 0.6); // Smaller for products
+          }));
           
           console.log('[Try-On] Sending try-on request...');
           const response = await fetch('/api/gemini-tryon', {
@@ -1055,7 +1132,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                                     <span className="text-2xl">📷</span>
                                   </div>
                                   <p className="text-sm font-medium text-gray-700">Click to upload your photo</p>
-                                  <p className="text-xs text-gray-500">JPG, PNG, or GIF (max 10MB)</p>
+                                  <p className="text-xs text-gray-500">JPG, PNG, or GIF (max 5MB, auto-compressed)</p>
                                 </div>
                               )}
                             </label>
@@ -1157,7 +1234,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.10</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.11</p>
             </div>
     
             {error && (
