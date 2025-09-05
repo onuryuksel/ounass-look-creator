@@ -78,6 +78,18 @@ ${productSpecs}
 
 Generate a professional, photo-realistic image with natural lighting and realistic fabric draping.`;
 
+    // CRITICAL: Verify prompt was generated correctly
+    console.log('--- PROMPT GENERATION VERIFICATION ---');
+    console.log('Source image descriptions length:', sourceImageDescriptions.length);
+    console.log('Wearing instructions length:', wearingInstructions.length);
+    console.log('Product specs length:', productSpecs.length);
+    console.log('Final prompt length:', tryOnPrompt.length);
+    if (tryOnPrompt.length < 100) {
+      console.error('🚨 CRITICAL: Prompt seems too short!');
+      console.error('🚨 This suggests prompt generation failed!');
+    }
+    console.log('--- END PROMPT VERIFICATION ---');
+
     console.log('--- FINAL TRY-ON PROMPT SENT TO GEMINI-2.5-FLASH-IMAGE-PREVIEW ---');
     console.log('Product count:', productDetails.length);
     console.log('User photo provided:', !!userPhoto);
@@ -135,6 +147,13 @@ Generate a professional, photo-realistic image with natural lighting and realist
     console.log('🚀 CALLING GEMINI API...');
     console.log('Total images being sent:', allImages.length);
     console.log('Prompt length:', tryOnPrompt.length);
+    
+    // CRITICAL: Verify payload structure
+    console.log('--- PAYLOAD VERIFICATION ---');
+    console.log('Payload parts count:', payload.contents[0].parts.length);
+    console.log('First part type:', payload.contents[0].parts[0].text ? 'TEXT' : 'IMAGE');
+    console.log('First part content preview:', payload.contents[0].parts[0].text ? 
+      payload.contents[0].parts[0].text.substring(0, 100) + '...' : 'IMAGE DATA');
     
     // Log image sizes for debugging
     console.log('--- IMAGE SIZE ANALYSIS ---');
