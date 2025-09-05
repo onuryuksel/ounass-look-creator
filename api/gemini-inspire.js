@@ -140,6 +140,27 @@ Analyze the products and respond now:`;
       console.log('Details:', sceneSettings.details);
       console.log('--------------------------------');
       
+      // Create short summaries for form fields (3-4 words max)
+      const createShortSummary = (text) => {
+        if (!text) return '';
+        const words = text.split(' ').slice(0, 4); // Max 4 words
+        return words.join(' ');
+      };
+      
+      const shortSummaries = {
+        location: createShortSummary(sceneSettings.location),
+        mood: createShortSummary(sceneSettings.mood),
+        time: createShortSummary(sceneSettings.time),
+        details: createShortSummary(sceneSettings.details)
+      };
+      
+      console.log('--- SHORT SUMMARIES FOR FORM ---');
+      console.log('Location summary:', shortSummaries.location);
+      console.log('Mood summary:', shortSummaries.mood);
+      console.log('Time summary:', shortSummaries.time);
+      console.log('Details summary:', shortSummaries.details);
+      console.log('-------------------------------');
+      
       // Create structured lifestyle prompt
       const structuredPrompt = `A photorealistic lifestyle photograph of a fashion model.
 
@@ -165,7 +186,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       return res.json({ 
         success: true, 
         prompt: structuredPrompt,
-        sceneSettings: sceneSettings,
+        sceneSettings: sceneSettings, // Full details for prompt
+        shortSummaries: shortSummaries, // Short summaries for form fields
         debug: { 
           imageCount: images?.length,
           model: model,
