@@ -13,60 +13,48 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { images } = req.body;
+    const { images, userInputs } = req.body;
     
-    console.log('--- PRODUCT-AWARE INSPIRATION REQUEST ---');
+    console.log('--- LIFESTYLE PROMPT GENERATION REQUEST ---');
     console.log('IMAGE COUNT:', images?.length);
-    console.log('----------------------------------------');
+    console.log('USER INPUTS:', userInputs);
+    console.log('------------------------------------------');
     
-    const inspirationPrompt = `You are a world-class fashion photography art director. Analyze the fashion products in these images and answer these 4 specific questions to create the perfect lifestyle scene:
+    // Build scene setting from user inputs
+    let sceneSettings = [];
+    if (userInputs.location) sceneSettings.push(`Location: ${userInputs.location}`);
+    if (userInputs.mood) sceneSettings.push(`Mood: ${userInputs.mood}`);
+    if (userInputs.time) sceneSettings.push(`Time: ${userInputs.time}`);
+    if (userInputs.extra) sceneSettings.push(`Extra details: ${userInputs.extra}`);
+    
+    const sceneSettingText = sceneSettings.length > 0 
+      ? `\nSCENE SETTING (from user inputs):\n${sceneSettings.join('\n')}\n`
+      : '';
+    
+    const inspirationPrompt = `You are a professional fashion photographer and creative director. Create a complete lifestyle photoshoot prompt based on the fashion products in these images.
 
 ANALYZE THE PRODUCTS:
 Study the clothing, shoes, accessories, colors, style, formality level, and overall aesthetic of the products shown.
+${sceneSettingText}
+TASK: Generate a complete, professional lifestyle photoshoot prompt that incorporates the user's scene preferences above. The prompt should be ready to use for AI image generation.
 
-NOW ANSWER THESE 4 QUESTIONS SPECIFICALLY:
-
-1. WHAT IS THE LOCATION?
-   - BE VERY SPECIFIC: Include city/country and iconic landmarks when relevant
-   - Examples: "Rooftop terrace overlooking the Eiffel Tower in Paris", "Modern café in Soho, New York", "Burj Khalifa's observation deck in Dubai"
-   - Consider famous locations that match the product style: luxury hotels, iconic buildings, renowned districts
-   - Think globally: Paris, London, Tokyo, Dubai, Milan, New York, etc.
-
-2. WHAT IS THE MOOD?
-   - DESCRIBE THE ATMOSPHERE IN DETAIL (2-3 sentences)
-   - Don't just say "elegant" - explain what makes it elegant
-   - Examples: "Sophisticated Parisian chic with an air of effortless confidence", "Edgy urban energy with a rebellious yet refined attitude"
-   - Include the emotional experience, body language, and overall vibe
-
-3. WHAT IS THE TIME OF THE DAY?
-   - What time and lighting would best showcase these products?
-   - Consider: morning light, golden hour, evening, noon, blue hour
-   - Think about how lighting affects the product colors and textures
-
-4. WHAT ARE THE FURTHER DETAILS ABOUT THE SCENE?
-   - What additional elements, props, activities, or atmosphere details?
-   - Consider: weather, activities, props, background elements
-   - What would complete this perfect lifestyle moment?
+STRUCTURE YOUR RESPONSE AS A COMPLETE PROMPT:
+- Start with "A lifestyle photoshoot featuring..."
+- Include detailed scene description using the user's inputs
+- Describe the model and styling  
+- Specify lighting and photography style
+- Add atmospheric details
+- End with quality modifiers
 
 REQUIREMENTS:
-- BE HIGHLY SPECIFIC AND DETAILED in every answer
-- Location must include city/country and famous landmarks or districts
-- Mood must be 2-3 descriptive sentences, not just one word
-- Consider the product colors, style, and formality level
-- Make it aspirational and Instagram-worthy
-- Think of locations that fashion influencers would choose
+- Use the user's scene settings as the foundation
+- Make it professional and detailed
+- Include specific photographic terms
+- Make it suitable for AI image generation
+- Incorporate all the fashion products shown
+- Create aspirational, high-end fashion imagery
 
-INSPIRATION EXAMPLES FOR REFERENCE:
-- Casual streetwear → "Trendy coffee shop in Brooklyn's DUMBO with Manhattan Bridge backdrop"
-- Elegant evening wear → "Private terrace at Hotel George V overlooking Champs-Élysées in Paris"
-- Sporty chic → "Modern rooftop gym in Tokyo's Shibuya district with city skyline views"
-
-Answer these 4 questions clearly and in detail based on the products shown:
-
-1. LOCATION: [Your detailed answer about where]
-2. MOOD: [Your detailed answer about the atmosphere] 
-3. TIME: [Your detailed answer about when]
-4. EXTRA: [Your detailed answer about additional details]`;
+Generate a complete lifestyle photoshoot prompt now:`;
 
     const payload = {
       contents: [{
@@ -117,38 +105,32 @@ Answer these 4 questions clearly and in detail based on the products shown:
     if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
       const textPart = result.candidates[0].content.parts[0];
       
-      console.log('--- PRODUCT-AWARE INSPIRATION SUCCESS ---');
-      console.log('Generated inspiration text (length:', textPart.text?.length, '):', textPart.text);
-      console.log('Text complete?', textPart.text?.includes('}'));
-      console.log('---------------------------------------');
-      
-      // Check if response is truncated
-      if (!textPart.text?.includes('}')) {
-        console.warn('⚠️ WARNING: Response appears to be truncated - missing closing brace');
-      }
+      console.log('--- LIFESTYLE PROMPT GENERATION SUCCESS ---');
+      console.log('Generated prompt (length:', textPart.text?.length, '):', textPart.text);
+      console.log('-------------------------------------------');
       
       return res.json({ 
         success: true, 
-        text: textPart.text,
+        prompt: textPart.text,
         debug: { 
           imageCount: images?.length,
           model: model,
-          textLength: textPart.text?.length,
-          isComplete: textPart.text?.includes('}')
+          promptLength: textPart.text?.length,
+          userInputsUsed: Object.keys(userInputs || {}).length
         }
       });
     } else {
-      console.error('No valid inspiration in response:', result);
+      console.error('No valid prompt in response:', result);
       return res.status(500).json({ 
-        error: 'No inspiration received from AI',
+        error: 'No lifestyle prompt generated',
         debug: result
       });
     }
     
   } catch (error) {
-    console.error('Product-aware inspiration error:', error);
+    console.error('Lifestyle prompt generation error:', error);
     return res.status(500).json({ 
-      error: 'Failed to generate product-aware inspiration',
+      error: 'Failed to generate lifestyle prompt',
       details: error.message 
     });
   }

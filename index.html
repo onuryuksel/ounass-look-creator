@@ -351,10 +351,20 @@
         }
       };
     
-      // AI Creative Director function to inspire lifestyle inputs based on product images
+      // Generate lifestyle prompt with user answers as SCENE SETTING
       const inspireLifestyleInputs = async () => {
         try {
           setLoadingState('GENERATING_INSPIRATION');
+          
+          // Get user inputs for scene setting
+          const { location, mood, time, extra } = lifestyleInputs;
+          
+          // Check if user has filled at least some inputs
+          const hasUserInputs = location.trim() || mood.trim() || time.trim() || extra.trim();
+          
+          if (!hasUserInputs) {
+            throw new Error('Please fill in at least one field (location, mood, time, or extra details) before generating inspiration');
+          }
           
           // Get selected product images for AI analysis
           const selectedImageUrls = Object.keys(selectedImages).map(sku => selectedImages[sku]);
@@ -363,7 +373,8 @@
             throw new Error('No product images selected for inspiration');
           }
           
-          console.log('[Product-Aware Inspiration] Analyzing', selectedImageUrls.length, 'product images');
+          console.log('[Lifestyle Prompt Generator] Using user answers as SCENE SETTING');
+          console.log('User inputs:', { location, mood, time, extra });
           
           // Convert selected image URLs to base64 for AI analysis
           const base64Images = await Promise.all(
@@ -390,13 +401,19 @@
             throw new Error('Failed to process product images for inspiration');
           }
           
-          console.log('[Product-Aware Inspiration] Sending', validImages.length, 'images to AI Art Director');
+          console.log('[Lifestyle Prompt Generator] Sending', validImages.length, 'images with user scene setting to AI');
 
           const response = await fetch('/api/gemini-inspire', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              images: validImages
+              images: validImages,
+              userInputs: {
+                location: location.trim(),
+                mood: mood.trim(), 
+                time: time.trim(),
+                extra: extra.trim()
+              }
             })
           });
 
@@ -406,73 +423,45 @@
 
           const result = await response.json();
           
-          if (result.success && result.text) {
-            // Simple text extraction - no JSON parsing needed
-            const text = result.text;
-            console.log('[Product-Aware Inspiration] Raw AI response:', text);
+          if (result.success && result.prompt) {
+            // AI has generated a complete lifestyle prompt using user inputs as SCENE SETTING
+            const generatedPrompt = result.prompt;
+            console.log('[Lifestyle Prompt Generator] ✨ Generated prompt with user scene:', generatedPrompt);
             
-            const extractAnswer = (questionNumber, label) => {
-              // Look for pattern: "1. LOCATION:" or "LOCATION:" followed by the answer
-              const patterns = [
-                new RegExp(`${questionNumber}\\.\\s*${label}:\\s*(.+?)(?=\\n\\d+\\.|\\n[A-Z]+:|$)`, 'is'),
-                new RegExp(`${label}:\\s*(.+?)(?=\\n\\d+\\.|\\n[A-Z]+:|$)`, 'is')
-              ];
-              
-              for (const pattern of patterns) {
-                const match = text.match(pattern);
-                if (match && match[1]) {
-                  const answer = match[1].trim().replace(/^\[|\]$/g, ''); // Remove brackets if present
-                  console.log(`[Extraction] ${label}:`, answer.substring(0, 100) + '...');
-                  return answer;
-                }
-              }
-              
-              console.warn(`[Extraction] ${label}: NOT FOUND`);
-              return '';
-            };
+            // Set the generated prompt directly to the lifestyle prompt field
+            setPrompts(prev => ({
+              ...prev,
+              lifestyle: generatedPrompt
+            }));
             
-            const inspiration = {
-              location: extractAnswer('1', 'LOCATION') || 'A stylish urban setting',
-              mood: extractAnswer('2', 'MOOD') || 'Confident and sophisticated', 
-              time: extractAnswer('3', 'TIME') || 'Golden hour lighting',
-              extra: extractAnswer('4', 'EXTRA') || 'Complementary props and atmosphere'
-            };
-            
-            setLifestyleInputs(inspiration);
-            console.log('[Product-Aware Inspiration] ✨ Final extracted inspiration:', inspiration);
+            console.log('[Lifestyle Prompt Generator] ✅ Prompt successfully set to textarea');
             
           } else {
-            throw new Error(result.error || 'No product-aware inspiration received');
+            throw new Error(result.error || 'No lifestyle prompt generated');
           }
           
         } catch (error) {
-          console.error('[Product-Aware Inspiration] Failed:', error);
+          console.error('[Lifestyle Prompt Generator] Failed:', error);
           
-          // Product-aware fallback suggestions (more generic but still thoughtful)
-          const productAwareFallbacks = [
-            {
-              location: 'A modern minimalist studio with natural light',
-              mood: 'Clean and sophisticated',
-              time: 'Soft daylight through large windows',
-              extra: 'Subtle textures and neutral backdrop to highlight the products'
-            },
-            {
-              location: 'An upscale urban café with contemporary design',
-              mood: 'Relaxed elegance',
-              time: 'Warm afternoon light',
-              extra: 'Modern furniture and architectural details'
-            },
-            {
-              location: 'A stylish rooftop terrace with city views',
-              mood: 'Confident and dynamic',
-              time: 'Golden hour with urban backdrop',
-              extra: 'Contemporary setting that complements fashion-forward styling'
-            }
-          ];
+          // Create a fallback prompt using user inputs
+          const fallbackSceneElements = [];
+          if (location.trim()) fallbackSceneElements.push(`set in ${location}`);
+          if (mood.trim()) fallbackSceneElements.push(`with ${mood} atmosphere`);
+          if (time.trim()) fallbackSceneElements.push(`during ${time}`);
+          if (extra.trim()) fallbackSceneElements.push(`featuring ${extra}`);
           
-          const randomInspiration = productAwareFallbacks[Math.floor(Math.random() * productAwareFallbacks.length)];
-          setLifestyleInputs(randomInspiration);
-          console.log('[Product-Aware Inspiration] ✨ Using product-aware fallback:', randomInspiration);
+          const sceneDescription = fallbackSceneElements.length > 0 
+            ? fallbackSceneElements.join(', ')
+            : 'in a stylish, modern setting with elegant atmosphere during golden hour';
+          
+          const fallbackPrompt = `A lifestyle photoshoot ${sceneDescription}. Professional fashion photography with high-end styling, premium lighting, and sophisticated composition. Shot with professional camera equipment, featuring excellent depth of field and vibrant colors. High resolution, commercial quality.`;
+          
+          setPrompts(prev => ({
+            ...prev,
+            lifestyle: fallbackPrompt
+          }));
+          
+          console.log('[Lifestyle Prompt Generator] ⚠️ Used fallback prompt with user inputs');
         } finally {
           setLoadingState('IDLE');
         }
@@ -1284,7 +1273,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.36</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.37</p>
             </div>
     
             {error && (
