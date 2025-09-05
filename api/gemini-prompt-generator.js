@@ -31,26 +31,28 @@ export default async function handler(req, res) {
       return `- Image ${index + 2}: ${product.name} by ${product.brand} (${product.category})`;
     }).join('\n');
 
-    const promptGenerationRequest = `I need you to write a virtual try-on prompt for an AI image generation model.
+    const promptGenerationRequest = `Create a bulletproof virtual try-on prompt using this exact format:
 
-TASK: Virtual try-on (NOT a new photoshoot)
-USER PHOTO: Image 1 (the person who will try on the clothes - keep their exact background, pose, and setting)
-
-PRODUCTS TO APPLY:
+PRODUCTS AVAILABLE:
 ${productList}
 
-Please write a natural prompt that emphasizes this is a VIRTUAL TRY-ON task. Use a style similar to:
+Generate a prompt that follows this EXACT PATTERN:
 
-"This is a virtual try-on task. Please put the [product name] (Image X), the [product name] (Image Y), and the [product name] (Image Z) onto the person in Image 1. Keep the same background, setting, and pose from Image 1."
+"Replace the clothing on the person in Image 1 with: [list each product with image number]. 
 
-CRITICAL REQUIREMENTS for the prompt:
-- Emphasize this is "virtual try-on" not a new photoshoot
-- Specify to keep the original background and setting from Image 1
-- Mention maintaining the person's original pose and environment
-- Use "put on" or "apply" instead of just "wearing"
-- Be clear this is clothing replacement, not scene creation
+REQUIREMENTS:
+- Keep the EXACT same person (face, body, hair, skin tone)
+- Keep the EXACT same background and environment  
+- Keep the EXACT same pose and position
+- ONLY change the clothing items
+- Make the new clothes fit naturally
+- Maintain the same lighting and photo style
 
-Write only the prompt, nothing else.`;
+This is digital clothing replacement, not creating a new photo."
+
+CRITICAL: Use the exact format above. List each product clearly with its image number. Do not add extra creative language or change the structure.
+
+Write only the formatted prompt, nothing else.`;
 
     console.log('🎯 Sending prompt generation request to Gemini 1.5 Flash');
     console.log('Products count:', productDetails.length);

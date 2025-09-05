@@ -60,7 +60,17 @@ PRODUCT ${index + 1}:
         return `${product.name} by ${product.brand}`;
       }).join(', ');
       
-      tryOnPrompt = `I'd like you to combine the ${productDescriptions} onto the person in the first image. Please ensure the person remains the same - same face, same body, same characteristics. Replace their current clothing with the new items and make everything look natural and realistic.`;
+      tryOnPrompt = `Replace the clothing on the person in the first image with: ${productDescriptions}.
+
+REQUIREMENTS:
+- Keep the EXACT same person (face, body, hair, skin tone)
+- Keep the EXACT same background and environment
+- Keep the EXACT same pose and position  
+- ONLY change the clothing items
+- Make the new clothes fit naturally
+- Maintain the same lighting and photo style
+
+This is digital clothing replacement, not creating a new photo.`;
     }
 
     // Log prompt details
