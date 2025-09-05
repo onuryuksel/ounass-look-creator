@@ -685,20 +685,29 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             return await compressBase64Image(originalBase64, 512, 0.6); // Smaller for products
           }));
           
+          // Log final prompt data being sent
+          const tryOnPayload = {
+            userPhoto: tryOnPhoto,
+            productImages: base64Products,
+            productDetails: Object.keys(selectedImages).map(sku => ({
+              sku,
+              name: productImages[sku].name,
+              brand: productImages[sku].brand,
+              category: productImages[sku].category
+            }))
+          };
+          
+          console.log('--- TRY-ON FINAL PAYLOAD TO GEMINI ---');
+          console.log('User photo length:', tryOnPhoto.length);
+          console.log('Product images count:', base64Products.length);
+          console.log('Product details:', tryOnPayload.productDetails);
+          console.log('--- PAYLOAD DATA SENT TO /api/gemini-tryon ---');
+          
           console.log('[Try-On] Sending try-on request...');
           const response = await fetch('/api/gemini-tryon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userPhoto: tryOnPhoto,
-              productImages: base64Products,
-              productDetails: Object.keys(selectedImages).map(sku => ({
-                sku,
-                name: productImages[sku].name,
-                brand: productImages[sku].brand,
-                category: productImages[sku].category
-              }))
-            })
+            body: JSON.stringify(tryOnPayload)
           });
 
           if (!response.ok) {
@@ -1218,7 +1227,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.13</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.14</p>
             </div>
     
             {error && (

@@ -47,60 +47,75 @@ PRODUCT ${index + 1}:
 `;
     });
 
-    const tryOnPrompt = `You are an expert virtual try-on AI. Your task is to dress the person in the provided photo with the EXACT products from the reference images.
+    const tryOnPrompt = `🚨 CRITICAL VIRTUAL TRY-ON MISSION 🚨
 
-CRITICAL REQUIREMENT - PRODUCT PRESERVATION:
-EXACT products from the provided reference images should be used. These products are NOT to be used as inspiration - they are to be REPLICATED PERFECTLY with zero modifications.
+You are a specialized virtual try-on AI. Your PRIMARY task is to preserve the EXACT user in the first image and dress them with the EXACT products from the reference images.
 
-PRODUCT SPECIFICATIONS:
+⚠️ CRITICAL USER PRESERVATION REQUIREMENTS:
+- THE FIRST IMAGE CONTAINS THE USER - THIS PERSON MUST BE PRESERVED 100%
+- DO NOT create a new model or person
+- DO NOT change the user's face, body, pose, or identity
+- DO NOT generate a different person
+- USE THE EXACT USER from the first image as the foundation
+
+🎯 USER PHOTO ANALYSIS (FIRST IMAGE):
+- This is THE PERSON who will wear the products
+- Preserve their EXACT face, body shape, skin tone, pose
+- Maintain their background, lighting, and setting
+- Keep their body position and posture unchanged
+- This person MUST remain the same throughout
+
+📦 PRODUCT SPECIFICATIONS (SUBSEQUENT IMAGES):
 ${productSpecs}
 
-VIRTUAL TRY-ON INSTRUCTIONS:
-1. ANALYZE the user's photo to understand:
-   - Body position and pose
-   - Lighting conditions
-   - Background and setting
-   - Current clothing (to be replaced)
+🔧 VIRTUAL TRY-ON PROCESS:
+1. ✅ FOUNDATION: Use the EXACT user from the first image
+2. 🎯 ANALYSIS: Study user's pose, lighting, body shape
+3. 👕 CLOTHING REPLACEMENT: Replace only conflicting garments
+4. 🎨 PRODUCT APPLICATION: Apply each product naturally on the user
+5. ✨ INTEGRATION: Blend products seamlessly with user's body
+6. 🔍 QUALITY CHECK: Ensure user identity is preserved
 
-2. DRESS the person with the EXACT products:
-   - Place each product appropriately on the body
-   - Maintain natural fit and draping
-   - Ensure proper sizing and proportions
-   - Preserve original product colors, patterns, and textures
+🚫 ABSOLUTE PROHIBITIONS:
+- DO NOT create a new person/model
+- DO NOT change the user's identity, face, or body
+- DO NOT ignore the user photo
+- DO NOT use products as inspiration for a new person
+- DO NOT alter user's pose, background, or lighting significantly
 
-3. TECHNICAL REQUIREMENTS:
-   - Keep the person's face, hands, and visible skin unchanged
-   - Maintain the original background and lighting
-   - Ensure realistic shadows and highlights on the new clothing
-   - Blend clothing naturally with the body
-   - Preserve the original pose and body position
+⚡ TECHNICAL REQUIREMENTS:
+- HIGH RESOLUTION output
+- Photo-realistic quality
+- Natural fabric draping and fit
+- Realistic shadows and highlights
+- Seamless clothing integration
+- Preserve original image sharpness and detail
 
-4. QUALITY STANDARDS:
-   - Photo-realistic result
-   - Natural clothing fit and draping
-   - Consistent lighting across all elements
-   - No visible artifacts or blending issues
-   - Maintain original image quality and resolution
-
-WHAT TO PRESERVE:
-- User's face, skin tone, and facial features
-- Original background and environment
-- User's pose and body position
-- Natural lighting and shadows
-- Image quality and resolution
-
-WHAT TO REPLACE:
-- Only the clothing items that conflict with the new products
-- Ensure new products fit naturally on the body
+🎖️ SUCCESS CRITERIA:
+- User from first image is clearly recognizable ✓
+- All products are applied correctly to the user ✓
+- High quality, realistic result ✓
+- Natural clothing fit and appearance ✓
+- User's identity and appearance preserved ✓
 
 FINAL INSTRUCTION:
-Copy the products pixel-perfect. Do not create variations. Do not interpret. Do not stylize. REPLICATE EXACTLY as provided while naturally fitting them on the user's body.
+Take the EXACT user from the first image and dress them with the EXACT products. Do not create variations, interpretations, or new people. The user MUST remain the same person throughout.
 
-Return a photo-realistic image of the person wearing the exact products provided.`;
+Return a HIGH-QUALITY photo-realistic image of the SAME USER wearing the exact products provided.`;
 
-    console.log('--- TRY-ON PROMPT ---');
+    console.log('--- FINAL TRY-ON PROMPT SENT TO GEMINI-2.5-FLASH-IMAGE-PREVIEW ---');
+    console.log('Product count:', productDetails.length);
+    console.log('User photo provided:', !!userPhoto);
+    console.log('Product images provided:', productImages.length);
+    console.log('');
+    console.log('FULL PROMPT:');
     console.log(tryOnPrompt);
-    console.log('--- END PROMPT ---');
+    console.log('');
+    console.log('PRODUCT DETAILS:');
+    productDetails.forEach((product, index) => {
+      console.log(`Product ${index + 1}: ${product.name} (${product.brand}) - ${product.category} - SKU: ${product.sku}`);
+    });
+    console.log('--- END OF FINAL TRY-ON PROMPT ---');
 
     // Prepare images for Gemini API
     const allImages = [
