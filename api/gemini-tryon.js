@@ -1,3 +1,4 @@
+
 export default async function handler(req, res) {
   console.log('--- TRY-ON API STARTED ---');
   console.log('Method:', req.method);
@@ -47,61 +48,37 @@ PRODUCT ${index + 1}:
 `;
     });
 
-    const tryOnPrompt = `🚨 CRITICAL VIRTUAL TRY-ON MISSION 🚨
+    const tryOnPrompt = `Virtual Try-On Task: Dress the person in the first image with the clothing items from the subsequent images.
 
-You are a specialized virtual try-on AI. Your PRIMARY task is to preserve the EXACT user in the first image and dress them with the EXACT products from the reference images.
+STEP 1 - ANALYZE THE USER (First Image):
+- The first image shows the person who will wear the products
+- Keep their face, body shape, skin tone, and pose exactly the same
+- Maintain their background and lighting style
+- This person is your base - they should remain recognizable
 
-⚠️ CRITICAL USER PRESERVATION REQUIREMENTS:
-- THE FIRST IMAGE CONTAINS THE USER - THIS PERSON MUST BE PRESERVED 100%
-- DO NOT create a new model or person
-- DO NOT change the user's face, body, pose, or identity
-- DO NOT generate a different person
-- USE THE EXACT USER from the first image as the foundation
-
-🎯 USER PHOTO ANALYSIS (FIRST IMAGE):
-- This is THE PERSON who will wear the products
-- Preserve their EXACT face, body shape, skin tone, pose
-- Maintain their background, lighting, and setting
-- Keep their body position and posture unchanged
-- This person MUST remain the same throughout
-
-📦 PRODUCT SPECIFICATIONS (SUBSEQUENT IMAGES):
+STEP 2 - IDENTIFY PRODUCTS (Subsequent Images):
 ${productSpecs}
 
-🔧 VIRTUAL TRY-ON PROCESS:
-1. ✅ FOUNDATION: Use the EXACT user from the first image
-2. 🎯 ANALYSIS: Study user's pose, lighting, body shape
-3. 👕 CLOTHING REPLACEMENT: Replace only conflicting garments
-4. 🎨 PRODUCT APPLICATION: Apply each product naturally on the user
-5. ✨ INTEGRATION: Blend products seamlessly with user's body
-6. 🔍 QUALITY CHECK: Ensure user identity is preserved
+STEP 3 - VIRTUAL STYLING:
+- Replace the person's current clothing with the provided products
+- Fit each item naturally on their body type and pose
+- Ensure proper sizing, draping, and realistic fabric behavior
+- Maintain the person's original pose and stance
+- Keep consistent lighting and shadows
 
-🚫 ABSOLUTE PROHIBITIONS:
-- DO NOT create a new person/model
-- DO NOT change the user's identity, face, or body
-- DO NOT ignore the user photo
-- DO NOT use products as inspiration for a new person
-- DO NOT alter user's pose, background, or lighting significantly
+TECHNICAL GOALS:
+- High resolution output (maintain detail quality)
+- Photo-realistic result
+- Natural clothing fit and appearance
+- Seamless integration of products onto the person
+- Professional fashion photography quality
 
-⚡ TECHNICAL REQUIREMENTS:
-- HIGH RESOLUTION output
-- Photo-realistic quality
-- Natural fabric draping and fit
-- Realistic shadows and highlights
-- Seamless clothing integration
-- Preserve original image sharpness and detail
+IMPORTANT: 
+- Use the exact person from the first image as your foundation
+- Apply the exact products from the reference images
+- Create a natural, realistic result where the person is wearing the new clothing items
 
-🎖️ SUCCESS CRITERIA:
-- User from first image is clearly recognizable ✓
-- All products are applied correctly to the user ✓
-- High quality, realistic result ✓
-- Natural clothing fit and appearance ✓
-- User's identity and appearance preserved ✓
-
-FINAL INSTRUCTION:
-Take the EXACT user from the first image and dress them with the EXACT products. Do not create variations, interpretations, or new people. The user MUST remain the same person throughout.
-
-Return a HIGH-QUALITY photo-realistic image of the SAME USER wearing the exact products provided.`;
+Generate a high-quality image of the person from the first image wearing the specified products.`;
 
     console.log('--- FINAL TRY-ON PROMPT SENT TO GEMINI-2.5-FLASH-IMAGE-PREVIEW ---');
     console.log('Product count:', productDetails.length);
@@ -157,6 +134,9 @@ Return a HIGH-QUALITY photo-realistic image of the SAME USER wearing the exact p
     console.log('Total images being sent:', allImages.length);
     
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    console.log('🚀 CALLING GEMINI API...');
+    console.log('Total images being sent:', allImages.length);
+    console.log('Prompt length:', tryOnPrompt.length);
     console.log('API URL:', apiUrl.replace(apiKey, '[API_KEY_HIDDEN]'));
     
     const response = await fetch(apiUrl, {
@@ -164,6 +144,9 @@ Return a HIGH-QUALITY photo-realistic image of the SAME USER wearing the exact p
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+    
+    console.log('✅ Raw Gemini response received');
+    console.log('Response status:', response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -184,8 +167,27 @@ Return a HIGH-QUALITY photo-realistic image of the SAME USER wearing the exact p
       console.error('Raw response that failed to parse:', responseText);
       throw new Error(`Failed to parse Gemini API response: ${jsonError.message}`);
     }
-    console.log('--- TRY-ON RESPONSE ---');
-    console.log(JSON.stringify(result, null, 2));
+    console.log('--- TRY-ON RESPONSE ANALYSIS ---');
+    console.log('Response structure:', {
+      hasCandidates: !!result.candidates,
+      candidatesCount: result.candidates?.length || 0,
+      hasContent: !!(result.candidates?.[0]?.content),
+      hasPartse: !!(result.candidates?.[0]?.content?.parts),
+      partsCount: result.candidates?.[0]?.content?.parts?.length || 0
+    });
+    if (result.candidates?.[0]?.content?.parts) {
+      console.log('Parts analysis:');
+      result.candidates[0].content.parts.forEach((part, index) => {
+        console.log(`Part ${index}:`, {
+          hasText: !!part.text,
+          hasInlineData: !!part.inlineData,
+          textLength: part.text?.length || 0,
+          dataSize: part.inlineData?.data?.length || 0,
+          mimeType: part.inlineData?.mimeType
+        });
+      });
+    }
+    console.log('Full response (first 1000 chars):', JSON.stringify(result, null, 2).substring(0, 1000));
     console.log('------------------------');
     
     // Find the part with image data
