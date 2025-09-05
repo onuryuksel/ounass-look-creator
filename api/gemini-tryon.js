@@ -135,6 +135,21 @@ Generate a professional, photo-realistic image with natural lighting and realist
     console.log('🚀 CALLING GEMINI API...');
     console.log('Total images being sent:', allImages.length);
     console.log('Prompt length:', tryOnPrompt.length);
+    
+    // Log image sizes for debugging
+    console.log('--- IMAGE SIZE ANALYSIS ---');
+    console.log('User photo size (chars):', userPhoto.length);
+    productImages.forEach((img, index) => {
+      console.log(`Product image ${index + 1} size (chars):`, img.length);
+    });
+    
+    // Calculate total payload size
+    const payloadString = JSON.stringify(payload);
+    const payloadSizeMB = (payloadString.length / (1024 * 1024)).toFixed(2);
+    console.log('Total payload size:', payloadSizeMB, 'MB');
+    console.log('Total payload chars:', payloadString.length);
+    console.log('--- END SIZE ANALYSIS ---');
+    
     console.log('API URL:', apiUrl.replace(apiKey, '[API_KEY_HIDDEN]'));
     
     const response = await fetch(apiUrl, {

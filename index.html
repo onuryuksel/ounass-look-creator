@@ -635,8 +635,18 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           
           console.log('--- TRY-ON FINAL PAYLOAD TO GEMINI ---');
           console.log('User photo length:', tryOnPhoto.length);
+          console.log('User photo format:', tryOnPhoto.substring(0, 50) + '...');
           console.log('Product images count:', base64Products.length);
+          base64Products.forEach((img, index) => {
+            console.log(`Product ${index + 1} length:`, img.length);
+            console.log(`Product ${index + 1} format:`, img.substring(0, 50) + '...');
+          });
           console.log('Product details:', tryOnPayload.productDetails);
+          
+          // Calculate frontend payload size
+          const frontendPayload = JSON.stringify(tryOnPayload);
+          const frontendSizeMB = (frontendPayload.length / (1024 * 1024)).toFixed(2);
+          console.log('Frontend payload size:', frontendSizeMB, 'MB');
           console.log('--- PAYLOAD DATA SENT TO /api/gemini-tryon ---');
           
           console.log('[Try-On] Sending try-on request...');
@@ -1163,7 +1173,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.17</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.18</p>
             </div>
     
             {error && (
