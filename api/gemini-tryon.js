@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userPhoto, productImages, productDetails } = req.body;
+    const { userPhoto, productImages, productDetails, generatedPrompt } = req.body;
     
     console.log('--- TRY-ON REQUEST ---');
     console.log('User photo provided:', !!userPhoto);
@@ -48,32 +48,20 @@ PRODUCT ${index + 1}:
 `;
     });
 
-    // Create detailed product descriptions for the prompt
-    const productDescriptions = productDetails.map((product, index) => {
-      return `${product.name} by ${product.brand} (${product.category})`;
-    }).join(', ');
-
-    // Build simple, direct prompt
-    const tryOnPrompt = `I need to perform a virtual try-on task. 
-
-TASK: Take the person in the first image and dress them with the products shown in the following images.
-
-PERSON: Use the exact person from the first image - same face, same body, same hair, same skin tone.
-
-PRODUCTS TO ADD: ${productDescriptions}
-
-INSTRUCTIONS:
-- Replace their current clothing with the new items
-- Keep the same person (do not change their appearance)  
-- Show only ONE person in the final image
-- Make the clothing fit naturally on their body
-- Add accessories like bags without replacing clothing
-- Keep realistic lighting and shadows
-- Maintain photo-realistic quality
-
-CRITICAL: This must be a single person wearing new clothes, not multiple people.
-
-Generate a high-quality fashion photograph of the same person wearing the specified items.`;
+    // Use generated prompt if provided, otherwise fallback to simple approach
+    let tryOnPrompt;
+    
+    if (generatedPrompt && generatedPrompt.trim()) {
+      console.log('✅ Using AI-generated prompt');
+      tryOnPrompt = generatedPrompt.trim();
+    } else {
+      console.log('⚠️ No generated prompt provided, using fallback');
+      const productDescriptions = productDetails.map((product, index) => {
+        return `${product.name} by ${product.brand}`;
+      }).join(', ');
+      
+      tryOnPrompt = `I'd like you to combine the ${productDescriptions} onto the person in the first image. Please ensure the person remains the same - same face, same body, same characteristics. Replace their current clothing with the new items and make everything look natural and realistic.`;
+    }
 
     // Log prompt details
     console.log('--- NEW SIMPLE PROMPT APPROACH ---');

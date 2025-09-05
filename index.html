@@ -648,15 +648,41 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         const startTime = performance.now();
         
         try {
-          // Convert product images to base64 (original quality)
+          // Step 1: Generate smart prompt using Gemini 1.5 Flash
+          console.log('[Try-On] Step 1: Generating smart prompt...');
+          const promptResponse = await fetch('/api/gemini-prompt-generator', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              productDetails: Object.keys(selectedImages).map(sku => ({
+                sku,
+                name: productImages[sku].name,
+                brand: productImages[sku].brand,
+                category: productImages[sku].category
+              }))
+            })
+          });
+          
+          let generatedPrompt = null;
+          if (promptResponse.ok) {
+            const promptResult = await promptResponse.json();
+            if (promptResult.success) {
+              generatedPrompt = promptResult.generatedPrompt;
+              console.log('[Try-On] ✅ Smart prompt generated:', generatedPrompt);
+            }
+          } else {
+            console.log('[Try-On] ⚠️ Prompt generation failed, using fallback');
+          }
+          
+          // Step 2: Convert product images to base64 (original quality)
           const selectedImageUrls = Object.values(selectedImages);
-          console.log(`[Try-On] Converting ${selectedImageUrls.length} product images to base64...`);
+          console.log(`[Try-On] Step 2: Converting ${selectedImageUrls.length} product images to base64...`);
           
           const base64Products = await Promise.all(selectedImageUrls.map(async (url) => {
             return await urlToBase64(url); // No compression - original quality
           }));
           
-          // Log final prompt data being sent
+          // Step 3: Prepare payload with generated prompt
           const tryOnPayload = {
             userPhoto: tryOnPhoto,
             productImages: base64Products,
@@ -665,7 +691,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               name: productImages[sku].name,
               brand: productImages[sku].brand,
               category: productImages[sku].category
-            }))
+            })),
+            generatedPrompt: generatedPrompt // Include the AI-generated prompt
           };
           
           console.log('--- TRY-ON FINAL PAYLOAD TO GEMINI ---');
@@ -1240,7 +1267,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.30</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.31</p>
             </div>
     
             {error && (

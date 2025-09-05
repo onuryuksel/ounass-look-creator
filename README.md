@@ -1,4 +1,4 @@
-# Ounass Look Creator 🎨
+De# Ounass Look Creator 🎨
 
 AI-powered outfit generator that creates realistic fashion photography from Ounass product SKUs.
 
