@@ -968,7 +968,11 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                           name="prompt"
                           value="studio"
                           checked={selectedPrompt === 'studio'}
-                          onChange={(e) => { setSelectedPrompt(e.target.value); setShowLifestyleForm(false); }}
+                          onChange={(e) => { 
+                            setSelectedPrompt(e.target.value); 
+                            setShowLifestyleForm(false); 
+                            setShowTryOnForm(false); 
+                          }}
                           className="form-radio text-blue-600"
                         />
                         <span className="font-medium text-lg">Studio Shoot Prompt:</span>
@@ -992,7 +996,10 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                           name="prompt"
                           value="lifestyle"
                           checked={selectedPrompt === 'lifestyle'}
-                          onChange={(e) => setSelectedPrompt(e.target.value)}
+                          onChange={(e) => {
+                            setSelectedPrompt(e.target.value);
+                            setShowTryOnForm(false);
+                          }}
                           className="form-radio text-blue-600"
                         />
                         <span className="font-medium text-lg">Lifestyle Shoot Prompt:</span>
@@ -1086,19 +1093,16 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                           name="prompt"
                           value="tryon"
                           checked={selectedPrompt === 'tryon'}
-                          onChange={(e) => setSelectedPrompt(e.target.value)}
+                          onChange={(e) => {
+                            setSelectedPrompt(e.target.value);
+                            if (e.target.value === 'tryon') {
+                              setShowTryOnForm(true);
+                            }
+                          }}
                           className="form-radio text-blue-600"
                         />
                         <span className="font-medium text-lg">Try On Yourself:</span>
                       </div>
-                      {!showTryOnForm && selectedPrompt === 'tryon' && (
-                        <button
-                          onClick={() => setShowTryOnForm(true)}
-                          className="text-sm p-1 px-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
-                        >
-                          Upload Your Photo
-                        </button>
-                      )}
                     </label>
                     
                     {selectedPrompt === 'tryon' && showTryOnForm && (
@@ -1234,7 +1238,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.11</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.12</p>
             </div>
     
             {error && (
