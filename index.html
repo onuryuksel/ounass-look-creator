@@ -877,26 +877,26 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           const base64EndTime = performance.now();
           console.log(`[Timing] Base64 conversion completed in ${Math.round(base64EndTime - base64StartTime)}ms`);
           
-          // For lifestyle prompts, add product specifications
-          let finalPrompt = prompts[selectedPrompt];
+          // Generate product specifications for both studio and lifestyle prompts
+          const productSpecs = Object.keys(selectedImages).map((sku, index) => {
+            const product = productImages[sku];
+            console.log('[DEBUG] Processing product:', sku, product?.name, product?.brand);
+            return `PRODUCT ${index + 1}: ${product.name} by ${product.brand}`;
+          }).join('\n');
+          
+          console.log('[DEBUG] Generated product specs:', productSpecs);
           console.log('[DEBUG] Selected prompt type:', selectedPrompt);
-          console.log('[DEBUG] Original prompt includes placeholder?', finalPrompt.includes('[Products will be inserted here by the frontend]'));
           console.log('[DEBUG] Selected images:', Object.keys(selectedImages));
           
-          // For both studio and lifestyle prompts, add product specifications if placeholder exists
-          if ((selectedPrompt === 'lifestyle' || selectedPrompt === 'studio') && finalPrompt.includes('[Products will be inserted here by the frontend]')) {
-            // Generate product specifications
-            const productSpecs = Object.keys(selectedImages).map((sku, index) => {
-              const product = productImages[sku];
-              console.log('[DEBUG] Processing product:', sku, product?.name, product?.brand);
-              return `PRODUCT ${index + 1}: ${product.name} by ${product.brand}`;
-            }).join('\n');
-            
-            console.log('[DEBUG] Generated product specs:', productSpecs);
+          let finalPrompt = prompts[selectedPrompt];
+          console.log('[DEBUG] Original prompt includes placeholder?', finalPrompt.includes('[Products will be inserted here by the frontend]'));
+          
+          // For both studio and lifestyle prompts, add product specifications
+          if (finalPrompt.includes('[Products will be inserted here by the frontend]')) {
             finalPrompt = finalPrompt.replace('[Products will be inserted here by the frontend]', productSpecs);
             console.log(`[${selectedPrompt}] ✅ Added product specifications to prompt`);
           } else {
-            console.log('[DEBUG] No product replacement needed or conditions not met');
+            console.log(`[${selectedPrompt}] ⚠️ No placeholder found, prompt may already have product specs`);
           }
           
           // --- CRITICAL DEBUG LOG ---
@@ -1380,7 +1380,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.52</p>
+              <p className="text-xs text-gray-300 mt-1">v1.9.53</p>
             </div>
     
             {error && (
