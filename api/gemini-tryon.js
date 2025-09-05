@@ -137,6 +137,9 @@ Return a photo-realistic image of the person wearing the exact products provided
     
     const model = 'gemini-2.5-flash-image-preview';
     console.log(`Using model: ${model} for virtual try-on`);
+    console.log('API Key available:', !!apiKey);
+    console.log('API Key first 10 chars:', apiKey ? apiKey.substring(0, 10) + '...' : 'N/A');
+    console.log('Total images being sent:', allImages.length);
     
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     console.log('API URL:', apiUrl.replace(apiKey, '[API_KEY_HIDDEN]'));
@@ -150,10 +153,22 @@ Return a photo-realistic image of the person wearing the exact products provided
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API Error:', errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error('Response status:', response.status);
+      console.error('Response headers:', Object.fromEntries(response.headers.entries()));
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
     
-    const result = await response.json();
+    let result;
+    let responseText;
+    try {
+      responseText = await response.text();
+      console.log('Raw API response (first 500 chars):', responseText.substring(0, 500));
+      result = JSON.parse(responseText);
+    } catch (jsonError) {
+      console.error('JSON parsing failed:', jsonError.message);
+      console.error('Raw response that failed to parse:', responseText);
+      throw new Error(`Failed to parse Gemini API response: ${jsonError.message}`);
+    }
     console.log('--- TRY-ON RESPONSE ---');
     console.log(JSON.stringify(result, null, 2));
     console.log('------------------------');
