@@ -207,63 +207,49 @@ This is precise digital clothing replacement - preserve everything except applyi
       console.log(`- Images being sent: 2 (current state + new product)`);
       console.log(`- Payload size: ${JSON.stringify(payload).length} chars`);
     
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    
-      console.log(`✅ Step ${i + 1} response received, status: ${response.status}`);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-        console.error(`❌ Step ${i + 1} failed:`, errorText);
-        throw new Error(`Step ${i + 1} failed: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log(`📊 Step ${i + 1} response structure:`, {
-      hasCandidates: !!result.candidates,
-      candidatesCount: result.candidates?.length || 0,
-      hasContent: !!(result.candidates?.[0]?.content),
-      partsCount: result.candidates?.[0]?.content?.parts?.length || 0
-    });
-      
-      // Log detailed response analysis for this step
-      console.log(`🔍 STEP ${i + 1} RESPONSE ANALYSIS:`);
-    if (result.candidates?.[0]?.content?.parts) {
-        result.candidates[0].content.parts.forEach((part, partIndex) => {
-          if (part.text) {
-            console.log(`- Part ${partIndex}: TEXT (${part.text.length} chars):`, part.text.substring(0, 200) + '...');
-          } else if (part.inlineData) {
-            console.log(`- Part ${partIndex}: IMAGE (${part.inlineData.data.length} chars, ${part.inlineData.mimeType})`);
+      // Call Gemini model directly
+      const result = await model.generateContent([
+        stepPrompt,
+        {
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: currentImage.split(',')[1] // Current state (user photo or previous result)
           }
-        });
-      }
-
-      // Extract image from this step following Google's multimodal approach
+        },
+        {
+          inlineData: {
+            mimeType: "image/jpeg", 
+            data: productImage.split(',')[1] // New product to add
+          }
+        }
+      ]);
+      
+      const response = await result.response;
+    
+      console.log(`✅ Step ${i + 1} response received`);
+      
+      // Get text response
+      const stepTextResponse = response.text() || '';
+      console.log(`📝 Step ${i + 1} text response:`, stepTextResponse.substring(0, 200) + '...');
+      
+      // Get image data from response
       let stepImageData = null;
-      let stepMimeType = 'image/jpeg';
-      let stepTextResponse = '';
-
-    if (result.candidates && result.candidates[0]?.content?.parts) {
-      const parts = result.candidates[0].content.parts;
-        
-      for (const part of parts) {
-          if (part.text !== null && part.text !== undefined) {
-            stepTextResponse += part.text + ' ';
-            console.log(`Step ${i + 1} AI text:`, part.text);
-          } else if (part.inlineData !== null && part.inlineData !== undefined) {
+      const candidates = response.candidates;
+      if (candidates && candidates[0] && candidates[0].content && candidates[0].content.parts) {
+        for (const part of candidates[0].content.parts) {
+          if (part.inlineData && part.inlineData.data) {
             stepImageData = part.inlineData.data;
-            stepMimeType = part.inlineData.mimeType || 'image/jpeg';
-            console.log(`✅ Step ${i + 1} image generated, MIME type:`, stepMimeType);
+            console.log(`🖼️ Step ${i + 1} image data found, size:`, stepImageData.length);
+            break;
           }
         }
       }
+      
+
 
       if (stepImageData) {
         // Update current image for next iteration
-        currentImage = `data:${stepMimeType};base64,${stepImageData}`;
+        currentImage = `data:image/jpeg;base64,${stepImageData}`;
         
         // Add this iteration to the thumbnails collection
         iterationImages.push({
