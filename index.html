@@ -76,6 +76,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       const [loadingState, setLoadingState] = useState('IDLE'); // More granular loading state
       const [photoValidationLoading, setPhotoValidationLoading] = useState(false);
       const [photoValidationError, setPhotoValidationError] = useState(null);
+      const [photoValidationSuccess, setPhotoValidationSuccess] = useState(null);
       const [error, setError] = useState(null);
       const [currentStep, setCurrentStep] = useState(1);
       const [showLifestyleForm, setShowLifestyleForm] = useState(false);
@@ -257,6 +258,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           // Photo is suitable, set it
           setTryOnPhoto(photoData);
           setPhotoValidationError(null);
+          setPhotoValidationSuccess(validationResult);
           
         } catch (error) {
           console.error('[Photo Validation] Error:', error);
@@ -274,6 +276,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       // Clear photo validation error and reset to upload state
       const tryAnotherPhoto = () => {
         setPhotoValidationError(null);
+        setPhotoValidationSuccess(null);
         setTryOnPhoto(null);
         setError(null);
         // Reset file input
@@ -1534,10 +1537,29 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                                   </button>
                                 </div>
                               ) : tryOnPhoto ? (
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                   <img src={tryOnPhoto} alt="Your Photo" className="w-32 h-32 object-cover rounded-lg mx-auto" />
-                                  <p className="text-sm text-green-600 font-medium">✅ Photo validated successfully!</p>
-                                  <p className="text-xs text-gray-500">Ready for virtual try-on</p>
+                                  <div className="text-center">
+                                    <p className="text-sm text-green-600 font-medium mb-2">✅ Photo validated successfully!</p>
+                                    <p className="text-xs text-green-700 font-medium mb-2">🏆 Score: {photoValidationSuccess?.score || 'N/A'}/100</p>
+                                    
+                                    {photoValidationSuccess?.individualScores && (
+                                      <div className="text-xs text-gray-600 space-y-1 bg-green-50 p-2 rounded border">
+                                        <p className="font-medium text-green-800 mb-1">📊 Individual Scores:</p>
+                                        <div className="grid grid-cols-2 gap-1 text-left">
+                                          <span>📊 Full Body: {photoValidationSuccess.individualScores.fullBodyShot}/100</span>
+                                          <span>🏞️ Background: {photoValidationSuccess.individualScores.plainBackground}/100</span>
+                                          <span>🧍 Pose: {photoValidationSuccess.individualScores.neutralPose}/100</span>
+                                          <span>🔍 Outline: {photoValidationSuccess.individualScores.wellDefinedOutline}/100</span>
+                                          <span>👕 Clothing: {photoValidationSuccess.individualScores.minimalLooseClothing}/100</span>
+                                          <span>💡 Lighting: {photoValidationSuccess.individualScores.goodLighting}/100</span>
+                                        </div>
+                                        <p className="text-center mt-1">📱 Resolution: {photoValidationSuccess.individualScores.resolutionQuality}/100</p>
+                                      </div>
+                                    )}
+                                    
+                                    <p className="text-xs text-gray-500 mt-2">Ready for virtual try-on</p>
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="space-y-2">
@@ -1724,7 +1746,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.10.18</p>
+              <p className="text-xs text-gray-300 mt-1">v1.10.19</p>
             </div>
     
             {error && (

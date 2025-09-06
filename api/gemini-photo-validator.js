@@ -45,7 +45,7 @@ WELL_DEFINED_OUTLINE: [score 0-100]
 MINIMAL_LOOSE_CLOTHING: [score 0-100]
 GOOD_LIGHTING: [score 0-100]
 PLAIN_BACKGROUND: [score 0-100]
-RESOLUTION_QUALITY: [score 0-100]
+RESOLUTION_QUALITY: [score 0-100]image.pngful sta
 ANALYSIS: [1-2 sentence summary of photo quality and main issues if any]
 RECOMMENDATIONS: [specific improvements needed if weighted score < 80]
 
