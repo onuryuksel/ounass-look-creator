@@ -1,3 +1,8 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { optimizeForTryOn, needsOptimization } from './image-optimizer.js';
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+
 export default async function handler(req, res) {
   console.log('🚨🚨🚨 BATCH TRY-ON API CALLED - THIS SHOULD BE VISIBLE! 🚨🚨🚨');
   console.log('Method:', req.method);
@@ -32,6 +37,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ 
         error: 'Missing required fields: userPhoto, productImages, productDetails' 
       });
+    }
+
+    // Step 0: Optimize user photo for try-on if needed
+    let optimizedUserPhoto = userPhoto;
+    if (needsOptimization(userPhoto, 2000000)) { // 2MB threshold for try-on
+      console.log('📦 Optimizing user photo for virtual try-on...');
+      try {
+        optimizedUserPhoto = await optimizeForTryOn(userPhoto);
+        console.log('✅ User photo optimized for virtual try-on');
+      } catch (error) {
+        console.error('❌ User photo optimization failed:', error);
+        return res.status(500).json({ 
+          error: 'User photo optimization failed',
+          details: error.message 
+        });
+      }
     }
 
     const apiKey = process.env.OunassLookCreator;
@@ -92,7 +113,7 @@ Return ONLY the main category (e.g., "dress", "shirt", "shoes", "bag", "jacket",
     };
 
     // BATCH PROCESSING: Process one product at a time following Google's single-item pattern
-    let currentImage = userPhoto; // Start with user photo
+    let currentImage = optimizedUserPhoto; // Start with optimized user photo
     let allPrompts = []; // Track all prompts used
     let stepResults = []; // Track each step result
     let iterationImages = []; // Track all intermediate images for thumbnails
@@ -103,8 +124,8 @@ Return ONLY the main category (e.g., "dress", "shirt", "shoes", "bag", "jacket",
     iterationImages.push({
       step: 0,
       label: "Original Photo",
-      image: userPhoto,
-      description: "User's original photo"
+      image: optimizedUserPhoto,
+      description: "User's optimized photo"
     });
 
     for (let i = 0; i < productDetails.length; i++) {

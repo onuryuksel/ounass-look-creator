@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { optimizeForValidation, needsOptimization } from './image-optimizer.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
@@ -15,6 +16,22 @@ export default async function handler(req, res) {
     }
 
     console.log('🔍 Starting photo validation for virtual try-on...');
+
+    // Step 1: Optimize image for validation if needed
+    let optimizedPhoto = userPhoto;
+    if (needsOptimization(userPhoto, 1500000)) { // 1.5MB threshold
+      console.log('📦 Optimizing photo for validation...');
+      try {
+        optimizedPhoto = await optimizeForValidation(userPhoto);
+        console.log('✅ Photo optimized for validation');
+      } catch (error) {
+        console.error('❌ Photo optimization failed:', error);
+        return res.status(500).json({ 
+          error: 'Photo optimization failed',
+          details: error.message 
+        });
+      }
+    }
 
     // Initialize Gemini 1.5 Flash for photo analysis
     const model = genAI.getGenerativeModel({ 
@@ -45,10 +62,10 @@ RECOMMENDATIONS: [specific improvements needed if score < 80]
 
 Be strict but fair in your evaluation. Focus on what would make virtual try-on most successful.`;
 
-    // Prepare the image for analysis
+    // Prepare the optimized image for analysis
     const imagePart = {
       inlineData: {
-        data: userPhoto,
+        data: optimizedPhoto,
         mimeType: "image/jpeg"
       }
     };
