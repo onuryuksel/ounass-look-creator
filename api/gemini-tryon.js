@@ -90,6 +90,17 @@ Return ONLY the main category (e.g., "dress", "shirt", "shoes", "bag", "jacket",
       }
     };
 
+    // Initialize Gemini model
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash-image-preview",
+      generationConfig: {
+        temperature: 0.1,
+        topP: 0.8,
+        topK: 40,
+        maxOutputTokens: 1024,
+      }
+    });
+
     // BATCH PROCESSING: Process one product at a time following Google's single-item pattern
     let currentImage = userPhoto; // Start with user photo
     let allPrompts = []; // Track all prompts used
@@ -358,7 +369,7 @@ This is precise digital clothing replacement - preserve everything except applyi
       error: error.message || 'Unknown error occurred during batch virtual try-on',
       debug: {
         errorType: error.constructor.name,
-        stepResults: stepResults || []
+        message: error.message
       }
     });
   }
