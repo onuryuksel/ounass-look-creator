@@ -223,8 +223,23 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             })
           });
           
+          const validationResult = await validationResponse.json();
+          
+          // Log individual scores to frontend console
+          if (validationResult.individualScores && validationResult.weights) {
+            console.log('🎯 WEIGHTED PHOTO VALIDATION SCORES:');
+            console.log(`  📊 FULL BODY SHOT: ${validationResult.individualScores.fullBodyShot}/100 (weight: ${validationResult.weights.fullBodyShot}%)`);
+            console.log(`  🧍 NEUTRAL POSE: ${validationResult.individualScores.neutralPose}/100 (weight: ${validationResult.weights.neutralPose}%)`);
+            console.log(`  🔍 WELL-DEFINED OUTLINE: ${validationResult.individualScores.wellDefinedOutline}/100 (weight: ${validationResult.weights.wellDefinedOutline}%)`);
+            console.log(`  👕 MINIMAL LOOSE CLOTHING: ${validationResult.individualScores.minimalLooseClothing}/100 (weight: ${validationResult.weights.minimalLooseClothing}%)`);
+            console.log(`  💡 GOOD LIGHTING: ${validationResult.individualScores.goodLighting}/100 (weight: ${validationResult.weights.goodLighting}%)`);
+            console.log(`  🏞️ PLAIN BACKGROUND: ${validationResult.individualScores.plainBackground}/100 (weight: ${validationResult.weights.plainBackground}%)`);
+            console.log(`  📱 RESOLUTION QUALITY: ${validationResult.individualScores.resolutionQuality}/100 (weight: ${validationResult.weights.resolutionQuality}%)`);
+            console.log(`  🏆 FINAL WEIGHTED SCORE: ${validationResult.score}/100`);
+            console.log(`  🎯 THRESHOLD: 80%`);
+          }
+          
           if (!validationResponse.ok) {
-            const validationResult = await validationResponse.json();
             console.log('[Photo Validation] ❌ Photo validation failed:', validationResult);
             
             // Show detailed error message in photo validation area
@@ -237,7 +252,6 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             return;
           }
           
-          const validationResult = await validationResponse.json();
           console.log('[Photo Validation] ✅ Photo validation passed:', validationResult);
           
           // Photo is suitable, set it
@@ -1710,7 +1724,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.10.16</p>
+              <p className="text-xs text-gray-300 mt-1">v1.10.17</p>
             </div>
     
             {error && (
