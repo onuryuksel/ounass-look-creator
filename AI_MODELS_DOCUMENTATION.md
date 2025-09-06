@@ -1,6 +1,6 @@
-# AI Models Documentation - Ounass Look Creator
+"# AI Models Documentation - Ounass Look Creator
 
-**Version:** v1.10.3  
+**Version:** v1.10.6  
 **Last Updated:** December 2024  
 **Project:** Ounass Look Creator - AI-powered outfit generator
 
@@ -19,6 +19,7 @@ This document provides a comprehensive overview of all AI models used in the Oun
 **Primary Use Cases:**
 - Virtual Try-On (Batch Processing)
 - Lifestyle Image Generation
+- Photo Validation for Virtual Try-On
 
 **Model Capabilities:**
 - Multimodal (Text + Image input/output)
@@ -105,6 +106,7 @@ Max Output Tokens: 2048
 - Text-only generation
 - Category extraction
 - Prompt generation
+- Photo validation analysis
 - Fast text processing
 
 **Model Capabilities:**
@@ -178,6 +180,45 @@ Max Output Tokens: 10
 - Minimal token usage for cost efficiency
 - Fallback to original category parsing
 - Error handling and logging
+
+#### 2.4 Photo Validation for Virtual Try-On (`/api/gemini-photo-validator.js`)
+
+**Purpose:** Analyze user photos for virtual try-on compatibility and provide quality assessment
+
+**Configuration:**
+```javascript
+Model: gemini-1.5-flash
+Response Modalities: ["TEXT"]
+Temperature: 0.1
+TopP: 0.8
+TopK: 40
+Max Output Tokens: 1024
+```
+
+**Validation Criteria:**
+1. **Full Body Shot (0-100):** Shows person's entire body or chest down
+2. **Neutral Pose (0-100):** Natural standing pose with arms slightly away
+3. **Good Lighting (0-100):** Clear, even lighting without shadows
+4. **Plain Background (0-100):** Simple, uncluttered background
+5. **Well-Defined Outline (0-100):** Clear person outline distinct from background
+6. **Minimal Loose Clothing (0-100):** Non-baggy clothing for better draping
+7. **Resolution Quality (0-100):** High-resolution with good clarity
+
+**Process Flow:**
+1. Analyze photo against 7 criteria
+2. Calculate overall compatibility score (0-100%)
+3. Provide detailed analysis and recommendations
+4. Accept if score ≥ 80%, reject with feedback if < 80%
+
+**Key Features:**
+- Strict but fair evaluation
+- Detailed feedback for rejected photos
+- 80% threshold for acceptance
+- User-friendly error messages
+- Cost-effective text-only analysis
+
+**Input:** User photo (base64)  
+**Output:** Compatibility score + Analysis + Recommendations
 
 ---
 
@@ -263,6 +304,10 @@ https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generat
 ### Prompt Generation
 - **Cost:** ~$0.0001 per request (Gemini 1.5 Flash - TEXT only)
 
+### Photo Validation
+- **Cost:** ~$0.0001 per request (Gemini 1.5 Flash - TEXT only)
+- **Usage:** Pre-validation before virtual try-on process
+
 ---
 
 ## Best Practices
@@ -335,7 +380,7 @@ https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generat
 ## Contact & Support
 
 **Project:** Ounass Look Creator  
-**Version:** v1.10.3  
+**Version:** v1.10.6  
 **Last Updated:** December 2024
 
 For questions about AI model usage or configuration, refer to this documentation or contact the development team.

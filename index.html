@@ -801,13 +801,38 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       // Handles virtual try-on generation
       const handleTryOnGeneration = async () => {
         setError(null);
-        setLoadingState('GENERATING_IMAGE');
+        setLoadingState('VALIDATING_PHOTO');
         
         console.log('[Try-On] Starting virtual try-on generation...');
         const startTime = performance.now();
         
         try {
+          // Step 0: Validate user photo for virtual try-on compatibility
+          console.log('[Try-On] Step 0: Validating user photo...');
+          const validationResponse = await fetch('/api/gemini-photo-validator', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userPhoto: tryOnPhoto
+            })
+          });
+          
+          if (!validationResponse.ok) {
+            const validationResult = await validationResponse.json();
+            console.log('[Try-On] ❌ Photo validation failed:', validationResult);
+            
+            // Show user-friendly error message
+            const errorMessage = `Photo not suitable for virtual try-on (${validationResult.score}% compatibility). ${validationResult.analysis} Please upload a better photo: ${validationResult.recommendations}`;
+            setError(errorMessage);
+            setLoadingState(null);
+            return;
+          }
+          
+          const validationResult = await validationResponse.json();
+          console.log('[Try-On] ✅ Photo validation passed:', validationResult);
+          
           // Step 1: Generate smart prompt using Gemini 1.5 Flash
+          setLoadingState('GENERATING_IMAGE');
           console.log('[Try-On] Step 1: Generating smart prompt...');
           const promptResponse = await fetch('/api/gemini-prompt-generator', {
             method: 'POST',
@@ -1440,10 +1465,10 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                 <div className="flex justify-end items-center mt-4">
                   <button
                     onClick={handleGenerateImage}
-                    disabled={loadingState === 'GENERATING_IMAGE' || (selectedPrompt === 'tryon' && !tryOnPhoto)}
+                    disabled={loadingState === 'GENERATING_IMAGE' || loadingState === 'VALIDATING_PHOTO' || (selectedPrompt === 'tryon' && !tryOnPhoto)}
                     className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
-                    {loadingState === 'GENERATING_IMAGE' ? (
+                    {loadingState === 'GENERATING_IMAGE' || loadingState === 'VALIDATING_PHOTO' ? (
                       <div className="flex items-center justify-center">
                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -1582,6 +1607,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             return 'Generating AI prompts...';
           case 'UPLOADING_IMAGES':
             return 'Preparing images for AI...';
+          case 'VALIDATING_PHOTO':
+            return 'Validating photo for virtual try-on...';
           case 'GENERATING_IMAGE':
             return 'Generating image, this may take a moment...';
           default:
@@ -1596,7 +1623,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.10.5</p>
+              <p className="text-xs text-gray-300 mt-1">v1.10.6</p>
             </div>
     
             {error && (
