@@ -1,5 +1,4 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { optimizeForTryOn, needsOptimization } from './image-optimizer.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
@@ -38,28 +37,12 @@ export default async function handler(req, res) {
         error: 'Missing required fields: userPhoto, productImages, productDetails' 
       });
     }
-
-    // Step 0: Optimize user photo for try-on if needed
-    let optimizedUserPhoto = userPhoto;
-    if (needsOptimization(userPhoto, 2000000)) { // 2MB threshold for try-on
-      console.log('📦 Optimizing user photo for virtual try-on...');
-      try {
-        optimizedUserPhoto = await optimizeForTryOn(userPhoto);
-        console.log('✅ User photo optimized for virtual try-on');
-      } catch (error) {
-        console.error('❌ User photo optimization failed:', error);
-        return res.status(500).json({ 
-          error: 'User photo optimization failed',
-          details: error.message 
-        });
-      }
-    }
-
+    
     const apiKey = process.env.OunassLookCreator;
     if (!apiKey) {
       return res.status(500).json({ error: 'OunassLookCreator API key not configured' });
     }
-
+    
     const model = 'gemini-2.5-flash-image-preview';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
@@ -113,7 +96,7 @@ Return ONLY the main category (e.g., "dress", "shirt", "shoes", "bag", "jacket",
     };
 
     // BATCH PROCESSING: Process one product at a time following Google's single-item pattern
-    let currentImage = optimizedUserPhoto; // Start with optimized user photo
+    let currentImage = userPhoto; // Start with user photo
     let allPrompts = []; // Track all prompts used
     let stepResults = []; // Track each step result
     let iterationImages = []; // Track all intermediate images for thumbnails
@@ -124,8 +107,8 @@ Return ONLY the main category (e.g., "dress", "shirt", "shoes", "bag", "jacket",
     iterationImages.push({
       step: 0,
       label: "Original Photo",
-      image: optimizedUserPhoto,
-      description: "User's optimized photo"
+      image: userPhoto,
+      description: "User's original photo"
     });
 
     for (let i = 0; i < productDetails.length; i++) {
@@ -217,32 +200,32 @@ This is precise digital clothing replacement - preserve everything except applyi
       console.log(`- AI Extracted Category: ${specificCategory}`);
       console.log(`- Images being sent: 2 (current state + new product)`);
       console.log(`- Payload size: ${JSON.stringify(payload).length} chars`);
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
       console.log(`✅ Step ${i + 1} response received, status: ${response.status}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
+    
+    if (!response.ok) {
+      const errorText = await response.text();
         console.error(`❌ Step ${i + 1} failed:`, errorText);
         throw new Error(`Step ${i + 1} failed: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
       console.log(`📊 Step ${i + 1} response structure:`, {
-        hasCandidates: !!result.candidates,
-        candidatesCount: result.candidates?.length || 0,
-        hasContent: !!(result.candidates?.[0]?.content),
-        partsCount: result.candidates?.[0]?.content?.parts?.length || 0
-      });
+      hasCandidates: !!result.candidates,
+      candidatesCount: result.candidates?.length || 0,
+      hasContent: !!(result.candidates?.[0]?.content),
+      partsCount: result.candidates?.[0]?.content?.parts?.length || 0
+    });
       
       // Log detailed response analysis for this step
       console.log(`🔍 STEP ${i + 1} RESPONSE ANALYSIS:`);
-      if (result.candidates?.[0]?.content?.parts) {
+    if (result.candidates?.[0]?.content?.parts) {
         result.candidates[0].content.parts.forEach((part, partIndex) => {
           if (part.text) {
             console.log(`- Part ${partIndex}: TEXT (${part.text.length} chars):`, part.text.substring(0, 200) + '...');
@@ -257,10 +240,10 @@ This is precise digital clothing replacement - preserve everything except applyi
       let stepMimeType = 'image/jpeg';
       let stepTextResponse = '';
 
-      if (result.candidates && result.candidates[0]?.content?.parts) {
-        const parts = result.candidates[0].content.parts;
+    if (result.candidates && result.candidates[0]?.content?.parts) {
+      const parts = result.candidates[0].content.parts;
         
-        for (const part of parts) {
+      for (const part of parts) {
           if (part.text !== null && part.text !== undefined) {
             stepTextResponse += part.text + ' ';
             console.log(`Step ${i + 1} AI text:`, part.text);
@@ -352,15 +335,15 @@ This is precise digital clothing replacement - preserve everything except applyi
       console.log(`  ${index + 1}. ${result.product} - ${result.success ? '✅ Success' : '❌ Failed'}`);
       console.log(`     Original: ${result.originalCategory} → AI: ${result.aiExtractedCategory}`);
     });
-
-    return res.json({
-      success: true,
+      
+            return res.json({
+        success: true,
       image: currentImage, // Final result after all products applied
       prompt: allPrompts.join('\n\n--- NEXT STEP ---\n\n'), // All prompts used
       stepResults: stepResults, // Detailed results for each step
       iterations: iterationImages, // All intermediate images for thumbnails
-      debug: { 
-        model: model,
+        debug: { 
+          model: model,
         totalProducts: productDetails.length,
         successfulSteps: stepResults.filter(s => s.success).length,
         finalImageDataLength: currentImage.length,
@@ -368,7 +351,7 @@ This is precise digital clothing replacement - preserve everything except applyi
         message: 'Batch virtual try-on successful with AI category extraction'
       }
     });
-
+    
   } catch (error) {
     console.error('--- BATCH TRY-ON ERROR ---');
     console.error('Error type:', error.constructor.name);

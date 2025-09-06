@@ -148,7 +148,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       const [tryOnIterations, setTryOnIterations] = useState([]);
       const [selectedIterationIndex, setSelectedIterationIndex] = useState(null);
     
-      // Handle try-on photo upload (optimization now handled in backend)
+      // Handle try-on photo upload with compression (original working version)
       const handleTryOnPhotoUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -158,18 +158,50 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             return;
           }
           
-          // Convert to base64 (optimization will be handled by backend APIs)
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const base64 = e.target.result;
-            console.log(`[Photo Upload] Original: ${file.size} bytes`);
-            console.log(`[Photo Upload] Base64: ${base64.length} chars`);
-            console.log(`[Photo Upload] Note: Image optimization will be handled by backend APIs`);
+          // Smart resize for API efficiency while maintaining quality
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
             
-            setTryOnPhoto(base64);
+            // Calculate optimal dimensions (max 1500px on longest side for high quality)
+            const maxSize = 1500;
+            let { width, height } = img;
+            
+            if (width > height) {
+              if (width > maxSize) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // High quality resize with good compression balance
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Use high quality JPEG (0.85 quality for good balance)
+            const optimizedDataURL = canvas.toDataURL('image/jpeg', 0.85);
+            
+            console.log(`[Photo Upload] Original: ${file.size} bytes (${img.width}x${img.height})`);
+            console.log(`[Photo Upload] Optimized: ${optimizedDataURL.length} chars (${width}x${height})`);
+            console.log(`[Photo Upload] Size reduction: ${((file.size - optimizedDataURL.length) / file.size * 100).toFixed(1)}%`);
+            
+            setTryOnPhoto(optimizedDataURL);
             setError(null);
           };
-          reader.readAsDataURL(file);
+          
+          img.onerror = () => {
+            setError('Failed to load the uploaded photo');
+          };
+          
+          img.src = URL.createObjectURL(file);
         }
       };
     
@@ -1603,7 +1635,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.10.8</p>
+              <p className="text-xs text-gray-300 mt-1">v1.10.9</p>
             </div>
     
             {error && (
