@@ -1,6 +1,6 @@
 
 export default async function handler(req, res) {
-  console.log('🚨🚨🚨 TRY-ON API CALLED - THIS SHOULD BE VISIBLE! 🚨🚨🚨');
+  console.log('🚨🚨🚨 BATCH TRY-ON API CALLED - THIS SHOULD BE VISIBLE! 🚨🚨🚨');
   console.log('Method:', req.method);
   console.log('Headers:', req.headers);
   console.log('Body keys:', Object.keys(req.body || {}));
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   try {
     const { userPhoto, productImages, productDetails, generatedPrompt } = req.body;
     
-    console.log('--- TRY-ON REQUEST ---');
+    console.log('--- BATCH TRY-ON REQUEST ---');
     console.log('User photo provided:', !!userPhoto);
     console.log('Product images count:', productImages?.length || 0);
     console.log('Product details:', productDetails);
@@ -35,251 +35,260 @@ export default async function handler(req, res) {
       });
     }
 
-    // Build product specifications for the prompt
-    let productSpecs = '';
-    productDetails.forEach((product, index) => {
-      productSpecs += `
-PRODUCT ${index + 1}:
-- SKU: ${product.sku}
-- Name: ${product.name}
-- Brand: ${product.brand}
-- Category: ${product.category}
-- Reference Image: Product image ${index + 1} (provided)
-`;
-    });
-
-    // Use generated prompt if provided, otherwise fallback to simple approach
-    let tryOnPrompt;
-    
-    if (generatedPrompt && generatedPrompt.trim()) {
-      console.log('✅ Using AI-generated prompt');
-      tryOnPrompt = generatedPrompt.trim();
-    } else {
-      console.log('⚠️ No generated prompt provided, using fallback');
-      const productDescriptions = productDetails.map((product, index) => {
-        return `${product.name} by ${product.brand}`;
-      }).join(', ');
-      
-      tryOnPrompt = `Replace the clothing on the person in the first image with: ${productDescriptions}.
-
-REQUIREMENTS:
-- Keep the EXACT same person (face, body, hair, skin tone)
-- Keep the EXACT same background and environment
-- Keep the EXACT same pose and position  
-- ONLY change the clothing items
-- Make the new clothes fit naturally
-- Maintain the same lighting and photo style
-
-This is digital clothing replacement, not creating a new photo.`;
-    }
-
-    // Log prompt details
-    console.log('--- TWO-STAGE AI PROMPT APPROACH ---');
-    console.log('Generated prompt used:', !!generatedPrompt);
-    console.log('Final prompt length:', tryOnPrompt.length);
-    console.log('Final prompt:', tryOnPrompt);
-    console.log('--- END PROMPT INFO ---');
-
-    console.log('--- FINAL TRY-ON PROMPT SENT TO GEMINI-2.5-FLASH-IMAGE-PREVIEW ---');
-    console.log('Product count:', productDetails.length);
-    console.log('User photo provided:', !!userPhoto);
-    console.log('Product images provided:', productImages.length);
-    console.log('');
-    console.log('FULL PROMPT:');
-    console.log(tryOnPrompt);
-    console.log('');
-    console.log('PRODUCT DETAILS:');
-    productDetails.forEach((product, index) => {
-      console.log(`Product ${index + 1}: ${product.name} (${product.brand}) - ${product.category} - SKU: ${product.sku}`);
-    });
-    console.log('--- END OF FINAL TRY-ON PROMPT ---');
-
-    // Prepare images for Gemini API
-    const allImages = [
-      {
-        inlineData: {
-          mimeType: "image/jpeg",
-          data: userPhoto.split(',')[1] // Remove data:image/jpeg;base64, prefix
-        }
-      },
-      ...productImages.map(img => ({
-        inlineData: {
-          mimeType: "image/jpeg", 
-          data: img.split(',')[1] // Remove data:image/jpeg;base64, prefix
-        }
-      }))
-    ];
-
-    const payload = {
-      contents: [{
-        parts: [
-          { text: tryOnPrompt },
-          ...allImages
-        ]
-      }],
-      generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"]
-      }
-    };
-    
     const apiKey = process.env.OunassLookCreator;
     if (!apiKey) {
       return res.status(500).json({ error: 'OunassLookCreator API key not configured' });
     }
-    
+
     const model = 'gemini-2.5-flash-image-preview';
-    console.log(`Using model: ${model} for virtual try-on`);
-    console.log('API Key available:', !!apiKey);
-    console.log('API Key first 10 chars:', apiKey ? apiKey.substring(0, 10) + '...' : 'N/A');
-    console.log('Total images being sent:', allImages.length);
-    
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    console.log('🚀 CALLING GEMINI API...');
-    console.log('Total images being sent:', allImages.length);
-    console.log('Prompt length:', tryOnPrompt.length);
+
+    // BATCH PROCESSING: Process one product at a time following Google's single-item pattern
+    let currentImage = userPhoto; // Start with user photo
+    let allPrompts = []; // Track all prompts used
+    let stepResults = []; // Track each step result
+    let iterationImages = []; // Track all intermediate images for thumbnails
+
+    console.log(`🔄 Starting batch processing for ${productDetails.length} products...`);
     
-    // CRITICAL: Verify payload structure
-    console.log('--- PAYLOAD VERIFICATION ---');
-    console.log('Payload parts count:', payload.contents[0].parts.length);
-    console.log('First part type:', payload.contents[0].parts[0].text ? 'TEXT' : 'IMAGE');
-    console.log('First part content preview:', payload.contents[0].parts[0].text ? 
-      payload.contents[0].parts[0].text.substring(0, 100) + '...' : 'IMAGE DATA');
-    
-    // Log image sizes for debugging
-    console.log('--- IMAGE SIZE ANALYSIS ---');
-    console.log('User photo size (chars):', userPhoto.length);
-    productImages.forEach((img, index) => {
-      console.log(`Product image ${index + 1} size (chars):`, img.length);
+    // Add the original user photo as the first iteration
+    iterationImages.push({
+      step: 0,
+      label: "Original Photo",
+      image: userPhoto,
+      description: "User's original photo"
     });
-    
-    // Calculate total payload size
-    const payloadString = JSON.stringify(payload);
-    const payloadSizeMB = (payloadString.length / (1024 * 1024)).toFixed(2);
-    console.log('Total payload size:', payloadSizeMB, 'MB');
-    console.log('Total payload chars:', payloadString.length);
-    console.log('--- END SIZE ANALYSIS ---');
-    
-    console.log('API URL:', apiUrl.replace(apiKey, '[API_KEY_HIDDEN]'));
-    
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    
-    console.log('✅ Raw Gemini response received');
-    console.log('Response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API Error:', errorText);
-      console.error('Response status:', response.status);
-      console.error('Response headers:', Object.fromEntries(response.headers.entries()));
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-    }
-    
-    let result;
-    let responseText;
-    try {
-      responseText = await response.text();
-      console.log('Raw API response (first 500 chars):', responseText.substring(0, 500));
-      result = JSON.parse(responseText);
-    } catch (jsonError) {
-      console.error('JSON parsing failed:', jsonError.message);
-      console.error('Raw response that failed to parse:', responseText);
-      throw new Error(`Failed to parse Gemini API response: ${jsonError.message}`);
-    }
-    console.log('--- TRY-ON RESPONSE ANALYSIS ---');
-    console.log('Response structure:', {
-      hasCandidates: !!result.candidates,
-      candidatesCount: result.candidates?.length || 0,
-      hasContent: !!(result.candidates?.[0]?.content),
-      hasPartse: !!(result.candidates?.[0]?.content?.parts),
-      partsCount: result.candidates?.[0]?.content?.parts?.length || 0
-    });
-    if (result.candidates?.[0]?.content?.parts) {
-      console.log('Parts analysis:');
-      result.candidates[0].content.parts.forEach((part, index) => {
-        console.log(`Part ${index}:`, {
-          hasText: !!part.text,
-          hasInlineData: !!part.inlineData,
-          textLength: part.text?.length || 0,
-          dataSize: part.inlineData?.data?.length || 0,
-          mimeType: part.inlineData?.mimeType
-        });
-      });
-    }
-    console.log('Full response (first 1000 chars):', JSON.stringify(result, null, 2).substring(0, 1000));
-    console.log('------------------------');
-    
-    // Find the part with image data
-    let tryOnImageData = null;
-    let mimeType = 'image/jpeg';
-    if (result.candidates && result.candidates[0]?.content?.parts) {
-      const parts = result.candidates[0].content.parts;
-      for (const part of parts) {
-        if (part.inlineData?.data) {
-          tryOnImageData = part.inlineData.data;
-          mimeType = part.inlineData.mimeType || 'image/jpeg';
-          break;
+
+    for (let i = 0; i < productDetails.length; i++) {
+      const product = productDetails[i];
+      const productImage = productImages[i];
+      
+      console.log(`\n--- STEP ${i + 1}/${productDetails.length}: ${product.name} ---`);
+      
+      // Create Google-style single-item prompt following their best practices
+      const stepPrompt = `Make the person in image 1 wear the ${product.category.toLowerCase()} from image 2. Leave the background unchanged.
+
+CRITICAL REQUIREMENTS:
+- Keep the EXACT same person (face, body, hair, skin tone, facial features)
+- Keep the EXACT same background and environment completely unchanged
+- Keep the EXACT same pose, position, and body posture
+- Keep the EXACT same lighting conditions and photo style
+- Keep the EXACT same camera angle and perspective
+- ONLY replace/add the specified ${product.category.toLowerCase()}
+- Make the new ${product.category.toLowerCase()} fit naturally on the person's body
+- Ensure proper sizing and proportions for the person's build
+- Maintain realistic fabric draping and shadows
+
+This is precise digital clothing replacement - preserve everything except the specified ${product.category.toLowerCase()}.`;
+
+      console.log(`Step ${i + 1} prompt:`, stepPrompt);
+      allPrompts.push(stepPrompt);
+      
+      // Log the prompt that will be sent to Google API for this step
+      console.log(`🔥🔥🔥 STEP ${i + 1} PROMPT SENT TO GOOGLE API 🔥🔥🔥`);
+      console.log(stepPrompt);
+      console.log(`🔥🔥🔥 END STEP ${i + 1} PROMPT 🔥🔥🔥`);
+
+      // Prepare images for this step: current image + new product
+      const stepImages = [
+        {
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: currentImage.split(',')[1] // Current state (user photo or previous result)
+          }
+        },
+        {
+          inlineData: {
+            mimeType: "image/jpeg", 
+            data: productImage.split(',')[1] // New product to add
+          }
         }
+      ];
+
+      const payload = {
+        contents: [{
+          parts: [
+            { text: stepPrompt },
+            ...stepImages
+          ]
+        }],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+          temperature: 0.3,        // Lower temperature for consistency
+          topP: 0.8,              // Controlled diversity
+          maxOutputTokens: 2048,   // Allow for detailed responses
+          candidateCount: 1        // Cost efficiency
+        }
+      };
+
+      console.log(`🚀 Calling Gemini API for step ${i + 1}...`);
+      console.log(`Current image size: ${currentImage.length} chars`);
+      console.log(`Product image size: ${productImage.length} chars`);
+      
+      // Log API call details for this step
+      console.log(`📡 STEP ${i + 1} API CALL DETAILS:`);
+      console.log(`- Model: ${model}`);
+      console.log(`- Product: ${product.name} by ${product.brand}`);
+      console.log(`- Category: ${product.category}`);
+      console.log(`- Images being sent: 2 (current state + new product)`);
+      console.log(`- Payload size: ${JSON.stringify(payload).length} chars`);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      console.log(`✅ Step ${i + 1} response received, status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Step ${i + 1} failed:`, errorText);
+        throw new Error(`Step ${i + 1} failed: ${response.status} - ${errorText}`);
       }
-    }
-    
-    if (tryOnImageData) {
-      console.log('--- TRY-ON SUCCESS ---');
-      console.log('Generated try-on image data length:', tryOnImageData.length);
-      console.log('Image MIME type:', mimeType);
-      console.log('Product count:', productDetails.length);
-      console.log('--------------------------------');
-      
-            return res.json({
-        success: true,
-        image: `data:${mimeType};base64,${tryOnImageData}`,
-        prompt: tryOnPrompt, // CRITICAL: Send prompt to frontend
-        debug: { 
-          model: model,
-          productCount: productDetails.length,
-          imageDataLength: tryOnImageData.length,
-          mimeType: mimeType,
-          message: 'Virtual try-on successful'
-        }
+
+      const result = await response.json();
+      console.log(`📊 Step ${i + 1} response structure:`, {
+        hasCandidates: !!result.candidates,
+        candidatesCount: result.candidates?.length || 0,
+        hasContent: !!(result.candidates?.[0]?.content),
+        partsCount: result.candidates?.[0]?.content?.parts?.length || 0
       });
-    } else {
-      console.log('❌ No try-on image data found in response');
       
-      // Check if there's text response explaining why
-      let aiTextResponse = '';
+      // Log detailed response analysis for this step
+      console.log(`🔍 STEP ${i + 1} RESPONSE ANALYSIS:`);
       if (result.candidates?.[0]?.content?.parts) {
-        const textParts = result.candidates[0].content.parts.filter(part => part.text);
-        if (textParts.length > 0) {
-          aiTextResponse = textParts.map(part => part.text).join(' ');
-          console.log('❌ AI returned text instead of image:');
-          console.log(aiTextResponse);
+        result.candidates[0].content.parts.forEach((part, partIndex) => {
+          if (part.text) {
+            console.log(`- Part ${partIndex}: TEXT (${part.text.length} chars):`, part.text.substring(0, 200) + '...');
+          } else if (part.inlineData) {
+            console.log(`- Part ${partIndex}: IMAGE (${part.inlineData.data.length} chars, ${part.inlineData.mimeType})`);
+          }
+        });
+      }
+
+      // Extract image from this step following Google's multimodal approach
+      let stepImageData = null;
+      let stepMimeType = 'image/jpeg';
+      let stepTextResponse = '';
+
+      if (result.candidates && result.candidates[0]?.content?.parts) {
+        const parts = result.candidates[0].content.parts;
+        
+        for (const part of parts) {
+          if (part.text !== null && part.text !== undefined) {
+            stepTextResponse += part.text + ' ';
+            console.log(`Step ${i + 1} AI text:`, part.text);
+          } else if (part.inlineData !== null && part.inlineData !== undefined) {
+            stepImageData = part.inlineData.data;
+            stepMimeType = part.inlineData.mimeType || 'image/jpeg';
+            console.log(`✅ Step ${i + 1} image generated, MIME type:`, stepMimeType);
+          }
         }
       }
-      
-      console.error('No valid image in try-on response:', result);
-      return res.status(500).json({ 
-        error: 'No try-on image received from AI',
-        aiResponse: aiTextResponse,
-        prompt: tryOnPrompt, // CRITICAL: Send prompt to frontend even on error
-        debug: result
-      });
+
+      if (stepImageData) {
+        // Update current image for next iteration
+        currentImage = `data:${stepMimeType};base64,${stepImageData}`;
+        
+        // Add this iteration to the thumbnails collection
+        iterationImages.push({
+          step: i + 1,
+          label: `Step ${i + 1}`,
+          image: currentImage,
+          description: `Added ${product.name} by ${product.brand}`,
+          product: {
+            name: product.name,
+            brand: product.brand,
+            category: product.category
+          }
+        });
+        
+        stepResults.push({
+          step: i + 1,
+          product: product.name,
+          success: true,
+          imageDataLength: stepImageData.length,
+          mimeType: stepMimeType,
+          textResponse: stepTextResponse
+        });
+        
+        console.log(`✅ Step ${i + 1} completed successfully`);
+        console.log(`🎯 STEP ${i + 1} SUMMARY:`);
+        console.log(`- Product: ${product.name} by ${product.brand}`);
+        console.log(`- Category: ${product.category}`);
+        console.log(`- Image generated: ${stepImageData.length} chars`);
+        console.log(`- MIME type: ${stepMimeType}`);
+        if (stepTextResponse) {
+          console.log(`- AI text response: ${stepTextResponse.substring(0, 100)}...`);
+        }
+        console.log(`- Progress: ${i + 1}/${productDetails.length} products processed`);
+      } else {
+        console.log(`❌ Step ${i + 1} failed - no image generated`);
+        console.log(`AI response:`, stepTextResponse);
+        
+        stepResults.push({
+          step: i + 1,
+          product: product.name,
+          success: false,
+          error: 'No image generated',
+          textResponse: stepTextResponse
+        });
+        
+        // If any step fails, we can either:
+        // 1. Stop and return error
+        // 2. Continue with previous image
+        // 3. Return partial results
+        
+        // For now, let's stop on first failure
+        throw new Error(`Step ${i + 1} failed: No image generated. AI response: ${stepTextResponse}`);
+      }
     }
+
+    // All steps completed successfully
+    console.log('🎉 All batch processing steps completed successfully!');
+    console.log('Final result image size:', currentImage.length, 'chars');
+    console.log('Total steps processed:', stepResults.length);
     
+    // Final batch processing summary
+    console.log('🏆 BATCH PROCESSING COMPLETE - FINAL SUMMARY:');
+    console.log(`- Total products processed: ${productDetails.length}`);
+    console.log(`- Successful steps: ${stepResults.filter(s => s.success).length}`);
+    console.log(`- Final image size: ${currentImage.length} chars`);
+    console.log(`- Total iterations captured: ${iterationImages.length}`);
+    console.log('Products processed:');
+    stepResults.forEach((result, index) => {
+      console.log(`  ${index + 1}. ${result.product} - ${result.success ? '✅ Success' : '❌ Failed'}`);
+    });
+
+    return res.json({
+      success: true,
+      image: currentImage, // Final result after all products applied
+      prompt: allPrompts.join('\n\n--- NEXT STEP ---\n\n'), // All prompts used
+      stepResults: stepResults, // Detailed results for each step
+      iterations: iterationImages, // All intermediate images for thumbnails
+      debug: { 
+        model: model,
+        totalProducts: productDetails.length,
+        successfulSteps: stepResults.filter(s => s.success).length,
+        finalImageDataLength: currentImage.length,
+        totalIterations: iterationImages.length,
+        message: 'Batch virtual try-on successful'
+      }
+    });
+
   } catch (error) {
-    console.error('--- TRY-ON ERROR ---');
+    console.error('--- BATCH TRY-ON ERROR ---');
     console.error('Error type:', error.constructor.name);
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
-    console.error('--- END TRY-ON ERROR ---');
+    console.error('--- END BATCH TRY-ON ERROR ---');
     
     return res.status(500).json({ 
-      error: error.message || 'Unknown error occurred during virtual try-on',
-      prompt: tryOnPrompt || 'Prompt not generated', // CRITICAL: Send prompt even on error
+      error: error.message || 'Unknown error occurred during batch virtual try-on',
       debug: {
-        errorType: error.constructor.name
+        errorType: error.constructor.name,
+        stepResults: stepResults || []
       }
     });
   }

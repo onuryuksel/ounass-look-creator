@@ -145,6 +145,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       ];
       const [showTryOnForm, setShowTryOnForm] = useState(false);
       const [tryOnPhoto, setTryOnPhoto] = useState(null);
+      const [tryOnIterations, setTryOnIterations] = useState([]);
     
       // Handle try-on photo upload with compression
       const handleTryOnPhotoUpload = (event) => {
@@ -901,12 +902,25 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           console.log('🚨 Full result keys:', Object.keys(result));
           
           // CRITICAL: Display the actual prompt used
-          console.log('🔥🔥🔥 PROMPT SENT TO AI 🔥🔥🔥');
+          console.log('🔥🔥🔥 BATCH PROCESSING PROMPTS SENT TO AI 🔥🔥🔥');
           console.log(result.prompt);
-          console.log('🔥🔥🔥 END OF PROMPT 🔥🔥🔥');
+          console.log('🔥🔥🔥 END OF ALL PROMPTS 🔥🔥🔥');
+          
+          // Log iteration details if available
+          if (result.iterations) {
+            console.log('📸 BATCH PROCESSING ITERATIONS:');
+            result.iterations.forEach((iteration, index) => {
+              console.log(`Step ${index}: ${iteration.label} - ${iteration.description}`);
+            });
+          }
           
           if (result.success) {
             setGeneratedImage(result.image);
+            // Store iterations for batch processing display
+            if (result.iterations) {
+              setTryOnIterations(result.iterations);
+              console.log(`[Try-On] Received ${result.iterations.length} iterations for batch processing display`);
+            }
             setCurrentStep(4);
             const endTime = performance.now();
             console.log(`[Try-On] Virtual try-on completed in ${Math.round(endTime - startTime)}ms`);
@@ -1084,6 +1098,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         setCurrentStep(1);
         setShowLifestyleForm(false);
         setLifestyleInputs({ location: '', mood: '', time: '', extra: '' });
+        setTryOnIterations([]);
       };
       
       // New function to go back to the prompts screen
@@ -1425,15 +1440,56 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             );
           case 4:
             return (
-              <div className="flex flex-col items-center space-y-4">
+              <div className="flex flex-col items-center space-y-6">
                 <h2 className="text-xl font-semibold mb-2">4. Generated Image</h2>
-                {generatedImage ? (
-                  <img src={generatedImage} alt="Generated Look" className="rounded-lg shadow-lg max-w-full h-auto" />
-                ) : (
-                  <div className="w-80 h-80 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-500">Image failed to load</span>
+                
+                {/* Show iteration thumbnails if available (batch processing) */}
+                {tryOnIterations && tryOnIterations.length > 1 && (
+                  <div className="w-full max-w-4xl">
+                    <h3 className="text-lg font-medium mb-4 text-center">Batch Processing Steps</h3>
+                    <div className="flex flex-wrap justify-center gap-4 mb-6">
+                      {tryOnIterations.map((iteration, index) => (
+                        <div key={index} className="flex flex-col items-center space-y-2">
+                          <div className={`relative w-24 h-24 rounded-lg overflow-hidden border-2 ${
+                            index === tryOnIterations.length - 1 ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'
+                          }`}>
+                            <img 
+                              src={iteration.image} 
+                              alt={iteration.label}
+                              className="w-full h-full object-cover"
+                            />
+                            {index === tryOnIterations.length - 1 && (
+                              <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-1 rounded">
+                                Final
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs font-medium text-gray-700">{iteration.label}</p>
+                            {iteration.description && (
+                              <p className="text-xs text-gray-500 max-w-20 truncate">{iteration.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
+                
+                {/* Final generated image */}
+                <div className="w-full max-w-2xl">
+                  <h3 className="text-lg font-medium mb-4 text-center">
+                    {tryOnIterations && tryOnIterations.length > 1 ? 'Final Result' : 'Generated Image'}
+                  </h3>
+                  {generatedImage ? (
+                    <img src={generatedImage} alt="Generated Look" className="rounded-lg shadow-lg max-w-full h-auto mx-auto" />
+                  ) : (
+                    <div className="w-80 h-80 bg-gray-200 rounded-lg flex items-center justify-center mx-auto">
+                      <span className="text-gray-500">Image failed to load</span>
+                    </div>
+                  )}
+                </div>
+                
                 <div className="flex space-x-4 mt-6">
                   <button
                     onClick={handleDownloadImage}
@@ -1483,7 +1539,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.9.55</p>
+              <p className="text-xs text-gray-300 mt-1">v1.10.0</p>
             </div>
     
             {error && (
