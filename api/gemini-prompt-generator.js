@@ -30,6 +30,18 @@ export default async function handler(req, res) {
     const productList = productDetails.map((product, index) => {
       return `- Image ${index + 2}: ${product.name} by ${product.brand} (${product.category})`;
     }).join('\n');
+    
+    // Determine the general item type (clothing, footwear, accessories, etc.)
+    const categories = productDetails.map(p => p.category.toLowerCase());
+    let itemType = "items";
+    
+    if (categories.some(cat => cat.includes('footwear') || cat.includes('shoe'))) {
+      itemType = "footwear";
+    } else if (categories.some(cat => cat.includes('clothing') || cat.includes('dress') || cat.includes('shirt') || cat.includes('pant'))) {
+      itemType = "clothing";
+    } else if (categories.some(cat => cat.includes('accessory') || cat.includes('bag') || cat.includes('jewelry'))) {
+      itemType = "accessories";
+    }
 
     const promptGenerationRequest = `Create a bulletproof virtual try-on prompt using this exact format:
 
@@ -38,17 +50,17 @@ ${productList}
 
 Generate a prompt that follows this EXACT PATTERN:
 
-"Replace the clothing on the person in Image 1 with: [list each product with image number]. 
+"Replace the ${itemType} on the person in Image 1 with: [list each product with image number]. 
 
 REQUIREMENTS:
 - Keep the EXACT same person (face, body, hair, skin tone)
 - Keep the EXACT same background and environment  
 - Keep the EXACT same pose and position
-- ONLY change the clothing items
-- Make the new clothes fit naturally
+- ONLY change the ${itemType}
+- Make the new ${itemType} fit naturally
 - Maintain the same lighting and photo style
 
-This is digital clothing replacement, not creating a new photo."
+This is digital ${itemType} replacement, not creating a new photo."
 
 CRITICAL: Use the exact format above. List each product clearly with its image number. Do not add extra creative language or change the structure.
 
