@@ -31,17 +31,10 @@ export default async function handler(req, res) {
       return `- Image ${index + 2}: ${product.name} by ${product.brand} (${product.category})`;
     }).join('\n');
     
-    // Determine the general item type (clothing, footwear, accessories, etc.)
-    const categories = productDetails.map(p => p.category.toLowerCase());
-    let itemType = "items";
-    
-    if (categories.some(cat => cat.includes('footwear') || cat.includes('shoe'))) {
-      itemType = "footwear";
-    } else if (categories.some(cat => cat.includes('clothing') || cat.includes('dress') || cat.includes('shirt') || cat.includes('pant'))) {
-      itemType = "clothing";
-    } else if (categories.some(cat => cat.includes('accessory') || cat.includes('bag') || cat.includes('jewelry'))) {
-      itemType = "accessories";
-    }
+    // Use the AI-extracted category directly from the first product
+    // The AI category extraction in gemini-tryon.js provides specific terms like "shoes", "dress", "jacket", etc.
+    // We'll use "items" as fallback, but the actual category will be dynamically inserted in the prompt
+    let itemType = "items"; // This will be replaced with AI-extracted category in gemini-tryon.js
 
     const promptGenerationRequest = `Create a bulletproof virtual try-on prompt using this exact format:
 

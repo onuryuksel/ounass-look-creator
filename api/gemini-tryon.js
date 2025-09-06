@@ -234,11 +234,13 @@ This is precise digital clothing replacement - preserve everything except applyi
       
       // Get image data from response
       let stepImageData = null;
+      let stepMimeType = 'image/jpeg'; // Default MIME type
       const candidates = response.candidates;
       if (candidates && candidates[0] && candidates[0].content && candidates[0].content.parts) {
         for (const part of candidates[0].content.parts) {
           if (part.inlineData && part.inlineData.data) {
             stepImageData = part.inlineData.data;
+            stepMimeType = part.inlineData.mimeType || 'image/jpeg';
             console.log(`🖼️ Step ${i + 1} image data found, size:`, stepImageData.length);
             break;
           }
