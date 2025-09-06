@@ -94,11 +94,11 @@ Be fair and realistic in your evaluation. Focus on what would make virtual try-o
     // Define weights (total = 100)
     const weights = {
       fullBodyShot: 25,      // Most important
-      neutralPose: 25,       // Most important
+      plainBackground: 15,   // Important
+      neutralPose: 15,       // Important
       wellDefinedOutline: 15, // Important
       minimalLooseClothing: 15, // Important
       goodLighting: 10,      // Medium
-      plainBackground: 5,    // Less important
       resolutionQuality: 5   // Less important
     };
 
