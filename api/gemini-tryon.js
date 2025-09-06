@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.OunassLookCreator);
 
 export default async function handler(req, res) {
   console.log('🚨🚨🚨 BATCH TRY-ON API CALLED - THIS SHOULD BE VISIBLE! 🚨🚨🚨');
@@ -38,13 +38,8 @@ export default async function handler(req, res) {
       });
     }
     
+    // API key is already configured in genAI initialization
     const apiKey = process.env.OunassLookCreator;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'OunassLookCreator API key not configured' });
-    }
-    
-    const model = 'gemini-2.5-flash-image-preview';
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     // AI-Powered category extraction function
     const extractCategoryWithAI = async (product) => {
