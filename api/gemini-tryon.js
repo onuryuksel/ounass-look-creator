@@ -118,7 +118,7 @@ Return ONLY the main category (e.g., "dress", "shirt", "shoes", "bag", "jacket",
       const specificCategory = await extractCategoryWithAI(product);
       
       // Create Google-style single-item prompt following their best practices
-      const stepPrompt = `Make the person in image 1 wear the ${specificCategory} from image 2. Leave the background unchanged.
+      const stepPrompt = `Make the person in image 1 wear the ${specificCategory} from image 2. Leave the background unchanged and preserve the person's facial expressions and emotions exactly as they are.
 
 CRITICAL PRODUCT PRESERVATION:
 - The ${specificCategory} from image 2 MUST be used EXACTLY as shown
@@ -129,6 +129,8 @@ CRITICAL PRODUCT PRESERVATION:
 
 CRITICAL PERSON PRESERVATION:
 - Keep the EXACT same person (face, body, hair, skin tone, facial features)
+- Keep the EXACT same facial expressions, emotions, and micro-expressions
+- Keep the EXACT same eye contact, smile, and mouth position
 - Keep the EXACT same background and environment completely unchanged
 - Keep the EXACT same pose, position, and body posture
 - Keep the EXACT same lighting conditions and photo style
