@@ -146,6 +146,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       const [showTryOnForm, setShowTryOnForm] = useState(false);
       const [tryOnPhoto, setTryOnPhoto] = useState(null);
       const [tryOnIterations, setTryOnIterations] = useState([]);
+      const [selectedIterationIndex, setSelectedIterationIndex] = useState(null);
     
       // Handle try-on photo upload with compression
       const handleTryOnPhotoUpload = (event) => {
@@ -919,6 +920,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             // Store iterations for batch processing display
             if (result.iterations) {
               setTryOnIterations(result.iterations);
+              // Set the last iteration (final result) as selected by default
+              setSelectedIterationIndex(result.iterations.length - 1);
               console.log(`[Try-On] Received ${result.iterations.length} iterations for batch processing display`);
             }
             setCurrentStep(4);
@@ -1071,10 +1074,24 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       };
     
       const handleDownloadImage = () => {
-        if (generatedImage) {
+        // Determine which image to download: selected iteration or final generated image
+        const imageToDownload = tryOnIterations && tryOnIterations.length > 1 && selectedIterationIndex !== null
+          ? tryOnIterations[selectedIterationIndex].image
+          : generatedImage;
+          
+        if (imageToDownload) {
           const link = document.createElement('a');
-          link.href = generatedImage;
-          link.download = 'ounass-look.png';
+          link.href = imageToDownload;
+          
+          // Generate filename based on selected iteration
+          let filename = 'ounass-look.png';
+          if (tryOnIterations && tryOnIterations.length > 1 && selectedIterationIndex !== null) {
+            const iteration = tryOnIterations[selectedIterationIndex];
+            const stepName = iteration.label.toLowerCase().replace(/\s+/g, '-');
+            filename = `ounass-${stepName}.png`;
+          }
+          
+          link.download = filename;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -1082,7 +1099,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           // Analytics: Track image download (disabled for debugging)
           // window.va?.track('image_downloaded', {
           //   prompt_type: selectedPrompt,
-          //   file_name: 'ounass-look.png'
+          //   file_name: filename
           // });
         }
       };
@@ -1099,6 +1116,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         setShowLifestyleForm(false);
         setLifestyleInputs({ location: '', mood: '', time: '', extra: '' });
         setTryOnIterations([]);
+        setSelectedIterationIndex(null);
       };
       
       // New function to go back to the prompts screen
@@ -1450,9 +1468,16 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                     <div className="flex flex-wrap justify-center gap-4 mb-6">
                       {tryOnIterations.map((iteration, index) => (
                         <div key={index} className="flex flex-col items-center space-y-2">
-                          <div className={`relative w-24 h-24 rounded-lg overflow-hidden border-2 ${
-                            index === tryOnIterations.length - 1 ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'
-                          }`}>
+                          <div 
+                            className={`relative w-24 h-24 rounded-lg overflow-hidden border-2 cursor-pointer transition-all duration-200 hover:scale-105 ${
+                              selectedIterationIndex === index 
+                                ? 'border-blue-500 ring-2 ring-blue-200' 
+                                : index === tryOnIterations.length - 1 
+                                  ? 'border-green-500 ring-2 ring-green-200' 
+                                  : 'border-gray-300 hover:border-gray-400'
+                            }`}
+                            onClick={() => setSelectedIterationIndex(index)}
+                          >
                             <img 
                               src={iteration.image} 
                               alt={iteration.label}
@@ -1461,6 +1486,11 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                             {index === tryOnIterations.length - 1 && (
                               <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-1 rounded">
                                 Final
+                              </div>
+                            )}
+                            {selectedIterationIndex === index && (
+                              <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
+                                Selected
                               </div>
                             )}
                           </div>
@@ -1476,17 +1506,44 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                   </div>
                 )}
                 
-                {/* Final generated image */}
+                {/* Display selected iteration or final generated image */}
                 <div className="w-full max-w-2xl">
                   <h3 className="text-lg font-medium mb-4 text-center">
-                    {tryOnIterations && tryOnIterations.length > 1 ? 'Final Result' : 'Generated Image'}
+                    {tryOnIterations && tryOnIterations.length > 1 
+                      ? (selectedIterationIndex !== null 
+                          ? tryOnIterations[selectedIterationIndex].label 
+                          : 'Final Result')
+                      : 'Generated Image'
+                    }
                   </h3>
-                  {generatedImage ? (
-                    <img src={generatedImage} alt="Generated Look" className="rounded-lg shadow-lg max-w-full h-auto mx-auto" />
-                  ) : (
-                    <div className="w-80 h-80 bg-gray-200 rounded-lg flex items-center justify-center mx-auto">
-                      <span className="text-gray-500">Image failed to load</span>
-                    </div>
+                  
+                  {/* Show selected iteration image or fallback to generatedImage */}
+                  {(() => {
+                    const imageToShow = tryOnIterations && tryOnIterations.length > 1 && selectedIterationIndex !== null
+                      ? tryOnIterations[selectedIterationIndex].image
+                      : generatedImage;
+                    
+                    return imageToShow ? (
+                      <img 
+                        src={imageToShow} 
+                        alt={tryOnIterations && tryOnIterations.length > 1 && selectedIterationIndex !== null
+                          ? tryOnIterations[selectedIterationIndex].label
+                          : "Generated Look"
+                        } 
+                        className="rounded-lg shadow-lg max-w-full h-auto mx-auto" 
+                      />
+                    ) : (
+                      <div className="w-80 h-80 bg-gray-200 rounded-lg flex items-center justify-center mx-auto">
+                        <span className="text-gray-500">Image failed to load</span>
+                      </div>
+                    );
+                  })()}
+                  
+                  {/* Show description for selected iteration */}
+                  {tryOnIterations && tryOnIterations.length > 1 && selectedIterationIndex !== null && tryOnIterations[selectedIterationIndex].description && (
+                    <p className="text-sm text-gray-600 text-center mt-2">
+                      {tryOnIterations[selectedIterationIndex].description}
+                    </p>
                   )}
                 </div>
                 
