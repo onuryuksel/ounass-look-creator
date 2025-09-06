@@ -193,8 +193,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
             console.log(`[Photo Upload] Optimized: ${optimizedDataURL.length} chars (${width}x${height})`);
             console.log(`[Photo Upload] Size reduction: ${((file.size - optimizedDataURL.length) / file.size * 100).toFixed(1)}%`);
             
-            setTryOnPhoto(optimizedDataURL);
-            setError(null);
+            // Validate photo immediately after upload
+            validatePhotoForTryOn(optimizedDataURL);
           };
           
           img.onerror = () => {
@@ -202,6 +202,45 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           };
           
           img.src = URL.createObjectURL(file);
+        }
+      };
+
+      // Validate photo for virtual try-on immediately after upload
+      const validatePhotoForTryOn = async (photoData) => {
+        try {
+          console.log('[Photo Validation] Starting immediate photo validation...');
+          setError(null);
+          
+          const validationResponse = await fetch('/api/gemini-photo-validator', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userPhoto: photoData
+            })
+          });
+          
+          if (!validationResponse.ok) {
+            const validationResult = await validationResponse.json();
+            console.log('[Photo Validation] ❌ Photo validation failed:', validationResult);
+            
+            // Show detailed error message to user
+            const errorMessage = `📸 Photo not suitable for virtual try-on (${validationResult.score}% compatibility)\n\n${validationResult.analysis}\n\n💡 Please upload a better photo:\n${validationResult.recommendations}`;
+            setError(errorMessage);
+            setTryOnPhoto(null); // Clear the photo
+            return;
+          }
+          
+          const validationResult = await validationResponse.json();
+          console.log('[Photo Validation] ✅ Photo validation passed:', validationResult);
+          
+          // Photo is suitable, set it
+          setTryOnPhoto(photoData);
+          setError(null);
+          
+        } catch (error) {
+          console.error('[Photo Validation] Error:', error);
+          setError('Photo validation failed. Please try again.');
+          setTryOnPhoto(null);
         }
       };
     
@@ -796,35 +835,14 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
       // Handles virtual try-on generation
       const handleTryOnGeneration = async () => {
         setError(null);
-        setLoadingState('VALIDATING_PHOTO');
+        setLoadingState('GENERATING_IMAGE');
         
         console.log('[Try-On] Starting virtual try-on generation...');
         const startTime = performance.now();
         
         try {
-          // Step 0: Validate user photo for virtual try-on compatibility
-          console.log('[Try-On] Step 0: Validating user photo...');
-          const validationResponse = await fetch('/api/gemini-photo-validator', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userPhoto: tryOnPhoto
-            })
-          });
-          
-          if (!validationResponse.ok) {
-            const validationResult = await validationResponse.json();
-            console.log('[Try-On] ❌ Photo validation failed:', validationResult);
-            
-            // Show user-friendly error message
-            const errorMessage = `Photo not suitable for virtual try-on (${validationResult.score}% compatibility). ${validationResult.analysis} Please upload a better photo: ${validationResult.recommendations}`;
-            setError(errorMessage);
-            setLoadingState(null);
-            return;
-          }
-          
-          const validationResult = await validationResponse.json();
-          console.log('[Try-On] ✅ Photo validation passed:', validationResult);
+          // Photo validation is now done immediately after upload
+          console.log('[Try-On] Photo already validated, proceeding with virtual try-on...');
           
           // Step 1: Generate smart prompt using Gemini 1.5 Flash
           setLoadingState('GENERATING_IMAGE');
@@ -1635,12 +1653,14 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.10.13</p>
+              <p className="text-xs text-gray-300 mt-1">v1.10.14</p>
             </div>
     
             {error && (
-              <div className="p-4 mb-6 text-sm text-red-700 bg-red-100 rounded-lg text-center font-medium">
-                {error}
+              <div className="p-4 mb-6 text-sm text-red-700 bg-red-100 rounded-lg text-left font-medium">
+                <div style={{ whiteSpace: 'pre-line' }}>
+                  {error}
+                </div>
                 <button 
                   onClick={() => setError(null)}
                   className="ml-2 text-red-500 hover:text-red-700 font-bold"
