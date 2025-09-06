@@ -240,8 +240,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         // });
         const validSkus = skus.filter(s => s);
         
-        if (validSkus.length < 2) {
-          setError('Please enter at least 2 SKUs.');
+        if (validSkus.length < 1) {
+          setError('Please enter at least 1 SKU.');
           setLoadingState('IDLE');
           return;
         }
@@ -411,7 +411,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
         setLoadingState('IDLE');
         
         // Smart error handling: prioritize success over errors
-        if (sortedImages.length >= 2) {
+        if (sortedImages.length >= 1) {
           // We have enough successful SKUs, clear errors and proceed
           setError(null);
           setCurrentStep(2); // Go to step 2 for image selection
@@ -424,8 +424,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
           // });
         } else if (sortedImages.length > 0) {
           // Some SKUs succeeded but not enough, show partial success message
-          setError(`Only ${sortedImages.length} SKU(s) loaded successfully. Need at least 2 SKUs to proceed.`);
-          console.log(`[Debug] Not enough SKUs: ${sortedImages.length} < 2`);
+          setError(`Only ${sortedImages.length} SKU(s) loaded successfully. Need at least 1 SKU to proceed.`);
+          console.log(`[Debug] Not enough SKUs: ${sortedImages.length} < 1`);
         } else {
           // No SKUs succeeded, show error
           setError(`Failed to fetch images from all proxy services. Please try again.`);
@@ -1145,7 +1145,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                       }}
                       className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {skus.length > 2 && (
+                    {skus.length > 1 && (
                       <button
                         onClick={() => setSkus(skus.filter((_, i) => i !== index))}
                         className="p-2 text-red-500 hover:text-red-700 transition-colors"
@@ -1166,7 +1166,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                   )}
                   <button
                     onClick={fetchImages}
-                    disabled={skus.filter(s => s).length < 2 || loadingState !== 'IDLE'}
+                    disabled={skus.filter(s => s).length < 1 || loadingState !== 'IDLE'}
                     className="p-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     {loadingState === 'FETCHING_IMAGES' ? 'Loading...' : 'Fetch Images'}
@@ -1596,7 +1596,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.10.2</p>
+              <p className="text-xs text-gray-300 mt-1">v1.10.3</p>
             </div>
     
             {error && (
@@ -1639,7 +1639,7 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                           <p className="text-xs text-green-600 font-medium">
                             ✓ {Object.keys(productImages).length} SKU(s) loaded successfully!
                           </p>
-                          {Object.keys(productImages).length >= 2 && (
+                          {Object.keys(productImages).length >= 1 && (
                             <p className="text-xs text-blue-600 font-medium">
                               🚀 Ready to proceed to next step!
                             </p>
