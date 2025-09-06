@@ -1,6 +1,6 @@
 # AI Models Documentation - Ounass Look Creator
 
-**Version:** v1.10.2  
+**Version:** v1.10.3  
 **Last Updated:** December 2024  
 **Project:** Ounass Look Creator - AI-powered outfit generator
 
@@ -19,7 +19,6 @@ This document provides a comprehensive overview of all AI models used in the Oun
 **Primary Use Cases:**
 - Virtual Try-On (Batch Processing)
 - Lifestyle Image Generation
-- Product Image Generation
 
 **Model Capabilities:**
 - Multimodal (Text + Image input/output)
@@ -246,18 +245,23 @@ https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generat
 
 ## Usage Statistics & Costs
 
+*Note: Cost estimates are based on Google's pricing as of December 2024. Actual costs may vary based on usage patterns and token consumption.*
+
 ### Virtual Try-On (Per Product)
-- **Category Extraction:** ~$0.0001 (Gemini 1.5 Flash)
-- **Try-On Generation:** ~$0.039 (Gemini 2.5 Flash Image)
+- **Category Extraction:** ~$0.0001 (Gemini 1.5 Flash - TEXT only)
+- **Try-On Generation:** ~$0.039 (Gemini 2.5 Flash Image - IMAGE output)
 - **Total per Product:** ~$0.0391
 
 ### Lifestyle Generation
-- **AI Art Director:** ~$0.002 (Gemini 2.5 Flash Image - TEXT)
-- **Image Generation:** ~$0.039 (Gemini 2.5 Flash Image - IMAGE)
+- **AI Art Director:** ~$0.002 (Gemini 2.5 Flash Image - TEXT only)
+- **Image Generation:** ~$0.039 (Gemini 2.5 Flash Image - IMAGE output)
 - **Total:** ~$0.041
 
 ### General Text Generation
-- **Cost:** ~$0.0001 per request (Gemini 1.5 Flash)
+- **Cost:** ~$0.0001 per request (Gemini 1.5 Flash - TEXT only)
+
+### Prompt Generation
+- **Cost:** ~$0.0001 per request (Gemini 1.5 Flash - TEXT only)
 
 ---
 
@@ -291,7 +295,13 @@ https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generat
 
 ## Future Enhancements
 
-### Planned Improvements
+### Current Status
+- **v1.10.3:** Minimum SKU requirement reduced to 1
+- **AI Category Extraction:** Successfully implemented
+- **Batch Processing:** Fully functional with intermediate results
+- **Interactive Thumbnails:** Working on frontend
+
+### Potential Improvements
 1. **Model Version Updates:** Keep models updated to latest versions
 2. **Performance Optimization:** Implement caching mechanisms
 3. **Cost Reduction:** Further optimize token usage
@@ -325,7 +335,7 @@ https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generat
 ## Contact & Support
 
 **Project:** Ounass Look Creator  
-**Version:** v1.10.2  
+**Version:** v1.10.3  
 **Last Updated:** December 2024
 
 For questions about AI model usage or configuration, refer to this documentation or contact the development team.
