@@ -1,4 +1,3 @@
-
 export default async function handler(req, res) {
   console.log('🚨🚨🚨 BATCH TRY-ON API CALLED - THIS SHOULD BE VISIBLE! 🚨🚨🚨');
   console.log('Method:', req.method);
@@ -43,6 +42,55 @@ export default async function handler(req, res) {
     const model = 'gemini-2.5-flash-image-preview';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
+    // AI-Powered category extraction function
+    const extractCategoryWithAI = async (product) => {
+      try {
+        const categoryPrompt = `Analyze this product and return ONLY the main clothing category in one word:
+
+Product Name: "${product.name}"
+Current Category: "${product.category}"
+Brand: "${product.brand}"
+
+Return ONLY the main category (e.g., "dress", "shirt", "shoes", "bag", "jacket", "skirt", "pants", "top"). No explanations, just the category word.`;
+
+        const categoryPayload = {
+          contents: [{
+            parts: [{ text: categoryPrompt }]
+          }],
+          generationConfig: {
+            responseModalities: ["TEXT"],
+            temperature: 0.1,  // Low temperature for consistent results
+            maxOutputTokens: 10
+          }
+        };
+
+        const categoryResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(categoryPayload)
+        });
+
+        if (categoryResponse.ok) {
+          const categoryResult = await categoryResponse.json();
+          const extractedCategory = categoryResult.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toLowerCase();
+          
+          if (extractedCategory) {
+            console.log(`🎯 AI extracted category for "${product.name}": "${extractedCategory}"`);
+            return extractedCategory;
+          }
+        }
+        
+        // Fallback if AI extraction fails
+        console.log(`⚠️ AI category extraction failed for "${product.name}", using fallback`);
+        return product.category.toLowerCase().split('/').pop().split(',').pop().trim().replace(/s$/, '');
+        
+      } catch (error) {
+        console.error(`❌ Error extracting category for "${product.name}":`, error);
+        // Fallback
+        return product.category.toLowerCase().split('/').pop().split(',').pop().trim().replace(/s$/, '');
+      }
+    };
+
     // BATCH PROCESSING: Process one product at a time following Google's single-item pattern
     let currentImage = userPhoto; // Start with user photo
     let allPrompts = []; // Track all prompts used
@@ -65,21 +113,34 @@ export default async function handler(req, res) {
       
       console.log(`\n--- STEP ${i + 1}/${productDetails.length}: ${product.name} ---`);
       
+      // Extract optimal category using AI
+      console.log(`🤖 Extracting category for "${product.name}"...`);
+      const specificCategory = await extractCategoryWithAI(product);
+      
       // Create Google-style single-item prompt following their best practices
-      const stepPrompt = `Make the person in image 1 wear the ${product.category.toLowerCase()} from image 2. Leave the background unchanged.
+      const stepPrompt = `Make the person in image 1 wear the ${specificCategory} from image 2. Leave the background unchanged.
 
-CRITICAL REQUIREMENTS:
+CRITICAL PRODUCT PRESERVATION:
+- The ${specificCategory} from image 2 MUST be used EXACTLY as shown
+- Do NOT alter, modify, or change any product details, shapes, colors, or design elements
+- Replicate the product PERFECTLY with zero modifications
+- Maintain the exact same fabric texture, pattern, and styling
+- Preserve all product-specific features and characteristics
+
+CRITICAL PERSON PRESERVATION:
 - Keep the EXACT same person (face, body, hair, skin tone, facial features)
 - Keep the EXACT same background and environment completely unchanged
 - Keep the EXACT same pose, position, and body posture
 - Keep the EXACT same lighting conditions and photo style
 - Keep the EXACT same camera angle and perspective
-- ONLY replace/add the specified ${product.category.toLowerCase()}
-- Make the new ${product.category.toLowerCase()} fit naturally on the person's body
+
+FITTING REQUIREMENTS:
+- Make the ${specificCategory} fit naturally on the person's body
 - Ensure proper sizing and proportions for the person's build
 - Maintain realistic fabric draping and shadows
+- The product should look as if it was originally worn by this person
 
-This is precise digital clothing replacement - preserve everything except the specified ${product.category.toLowerCase()}.`;
+This is precise digital clothing replacement - preserve everything except applying the specified ${specificCategory} exactly as shown.`;
 
       console.log(`Step ${i + 1} prompt:`, stepPrompt);
       allPrompts.push(stepPrompt);
@@ -129,7 +190,8 @@ This is precise digital clothing replacement - preserve everything except the sp
       console.log(`📡 STEP ${i + 1} API CALL DETAILS:`);
       console.log(`- Model: ${model}`);
       console.log(`- Product: ${product.name} by ${product.brand}`);
-      console.log(`- Category: ${product.category}`);
+      console.log(`- Original Category: ${product.category}`);
+      console.log(`- AI Extracted Category: ${specificCategory}`);
       console.log(`- Images being sent: 2 (current state + new product)`);
       console.log(`- Payload size: ${JSON.stringify(payload).length} chars`);
 
@@ -200,7 +262,8 @@ This is precise digital clothing replacement - preserve everything except the sp
           product: {
             name: product.name,
             brand: product.brand,
-            category: product.category
+            category: product.category,
+            aiExtractedCategory: specificCategory
           }
         });
         
@@ -210,13 +273,16 @@ This is precise digital clothing replacement - preserve everything except the sp
           success: true,
           imageDataLength: stepImageData.length,
           mimeType: stepMimeType,
-          textResponse: stepTextResponse
+          textResponse: stepTextResponse,
+          originalCategory: product.category,
+          aiExtractedCategory: specificCategory
         });
         
         console.log(`✅ Step ${i + 1} completed successfully`);
         console.log(`🎯 STEP ${i + 1} SUMMARY:`);
         console.log(`- Product: ${product.name} by ${product.brand}`);
-        console.log(`- Category: ${product.category}`);
+        console.log(`- Original Category: ${product.category}`);
+        console.log(`- AI Extracted Category: ${specificCategory}`);
         console.log(`- Image generated: ${stepImageData.length} chars`);
         console.log(`- MIME type: ${stepMimeType}`);
         if (stepTextResponse) {
@@ -232,7 +298,9 @@ This is precise digital clothing replacement - preserve everything except the sp
           product: product.name,
           success: false,
           error: 'No image generated',
-          textResponse: stepTextResponse
+          textResponse: stepTextResponse,
+          originalCategory: product.category,
+          aiExtractedCategory: specificCategory
         });
         
         // If any step fails, we can either:
@@ -259,6 +327,7 @@ This is precise digital clothing replacement - preserve everything except the sp
     console.log('Products processed:');
     stepResults.forEach((result, index) => {
       console.log(`  ${index + 1}. ${result.product} - ${result.success ? '✅ Success' : '❌ Failed'}`);
+      console.log(`     Original: ${result.originalCategory} → AI: ${result.aiExtractedCategory}`);
     });
 
     return res.json({
@@ -273,7 +342,7 @@ This is precise digital clothing replacement - preserve everything except the sp
         successfulSteps: stepResults.filter(s => s.success).length,
         finalImageDataLength: currentImage.length,
         totalIterations: iterationImages.length,
-        message: 'Batch virtual try-on successful'
+        message: 'Batch virtual try-on successful with AI category extraction'
       }
     });
 
