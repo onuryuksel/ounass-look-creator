@@ -45,10 +45,13 @@ RECOMMENDATIONS: [specific improvements needed if score < 80]
 
 Be strict but fair in your evaluation. Focus on what would make virtual try-on most successful.`;
 
+    // Clean base64 data (remove data:image/jpeg;base64, prefix)
+    const cleanBase64 = userPhoto.replace(/^data:image\/[a-z]+;base64,/, '');
+    
     // Prepare the image for analysis
     const imagePart = {
       inlineData: {
-        data: userPhoto,
+        data: cleanBase64,
         mimeType: "image/jpeg"
       }
     };
