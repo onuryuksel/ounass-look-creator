@@ -1530,29 +1530,31 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                                     {photoValidationError.individualScores && (
                                       <div className="text-xs text-red-700 space-y-1 bg-red-50 p-2 rounded border border-red-200 mb-3">
                                         <p className="font-medium text-red-800 mb-1 text-center">📊 Individual Scores:</p>
-                                        <div className="grid grid-cols-2 gap-1 text-left">
-                                          <span className={photoValidationError.individualScores.fullBodyShot < 70 ? 'text-red-800 font-medium' : 'text-red-600'}>
-                                            📊 Full Body: {photoValidationError.individualScores.fullBodyShot}/100
-                                          </span>
-                                          <span className={photoValidationError.individualScores.plainBackground < 70 ? 'text-red-800 font-medium' : 'text-red-600'}>
-                                            🏞️ Background: {photoValidationError.individualScores.plainBackground}/100
-                                          </span>
-                                          <span className={photoValidationError.individualScores.neutralPose < 70 ? 'text-red-800 font-medium' : 'text-red-600'}>
-                                            🧍 Pose: {photoValidationError.individualScores.neutralPose}/100
-                                          </span>
-                                          <span className={photoValidationError.individualScores.wellDefinedOutline < 70 ? 'text-red-800 font-medium' : 'text-red-600'}>
-                                            🔍 Outline: {photoValidationError.individualScores.wellDefinedOutline}/100
-                                          </span>
-                                          <span className={photoValidationError.individualScores.minimalLooseClothing < 70 ? 'text-red-800 font-medium' : 'text-red-600'}>
-                                            👕 Clothing: {photoValidationError.individualScores.minimalLooseClothing}/100
-                                          </span>
-                                          <span className={photoValidationError.individualScores.goodLighting < 70 ? 'text-red-800 font-medium' : 'text-red-600'}>
-                                            💡 Lighting: {photoValidationError.individualScores.goodLighting}/100
-                                          </span>
+                                        <div className="space-y-1">
+                                          <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                                            <div className={`text-xs ${photoValidationError.individualScores.fullBodyShot < 70 ? 'text-red-800 font-medium' : 'text-red-600'}`}>
+                                              📊 Full Body: <span className="font-mono">{photoValidationError.individualScores.fullBodyShot}/100</span>
+                                            </div>
+                                            <div className={`text-xs ${photoValidationError.individualScores.plainBackground < 70 ? 'text-red-800 font-medium' : 'text-red-600'}`}>
+                                              🏞️ Background: <span className="font-mono">{photoValidationError.individualScores.plainBackground}/100</span>
+                                            </div>
+                                            <div className={`text-xs ${photoValidationError.individualScores.neutralPose < 70 ? 'text-red-800 font-medium' : 'text-red-600'}`}>
+                                              🧍 Pose: <span className="font-mono">{photoValidationError.individualScores.neutralPose}/100</span>
+                                            </div>
+                                            <div className={`text-xs ${photoValidationError.individualScores.wellDefinedOutline < 70 ? 'text-red-800 font-medium' : 'text-red-600'}`}>
+                                              🔍 Outline: <span className="font-mono">{photoValidationError.individualScores.wellDefinedOutline}/100</span>
+                                            </div>
+                                            <div className={`text-xs ${photoValidationError.individualScores.minimalLooseClothing < 70 ? 'text-red-800 font-medium' : 'text-red-600'}`}>
+                                              👕 Clothing: <span className="font-mono">{photoValidationError.individualScores.minimalLooseClothing}/100</span>
+                                            </div>
+                                            <div className={`text-xs ${photoValidationError.individualScores.goodLighting < 70 ? 'text-red-800 font-medium' : 'text-red-600'}`}>
+                                              💡 Lighting: <span className="font-mono">{photoValidationError.individualScores.goodLighting}/100</span>
+                                            </div>
+                                          </div>
+                                          <div className={`text-xs text-center ${photoValidationError.individualScores.resolutionQuality < 70 ? 'text-red-800 font-medium' : 'text-red-600'}`}>
+                                            📱 Resolution: <span className="font-mono">{photoValidationError.individualScores.resolutionQuality}/100</span>
+                                          </div>
                                         </div>
-                                        <p className={`text-center mt-1 ${photoValidationError.individualScores.resolutionQuality < 70 ? 'text-red-800 font-medium' : 'text-red-600'}`}>
-                                          📱 Resolution: {photoValidationError.individualScores.resolutionQuality}/100
-                                        </p>
                                         <p className="text-xs text-red-600 text-center mt-2 italic">
                                           🎯 Scores below 70 need improvement
                                         </p>
@@ -1581,15 +1583,31 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                                     {photoValidationSuccess?.individualScores && (
                                       <div className="text-xs text-gray-600 space-y-1 bg-green-50 p-2 rounded border">
                                         <p className="font-medium text-green-800 mb-1">📊 Individual Scores:</p>
-                                        <div className="grid grid-cols-2 gap-1 text-left">
-                                          <span>📊 Full Body: {photoValidationSuccess.individualScores.fullBodyShot}/100</span>
-                                          <span>🏞️ Background: {photoValidationSuccess.individualScores.plainBackground}/100</span>
-                                          <span>🧍 Pose: {photoValidationSuccess.individualScores.neutralPose}/100</span>
-                                          <span>🔍 Outline: {photoValidationSuccess.individualScores.wellDefinedOutline}/100</span>
-                                          <span>👕 Clothing: {photoValidationSuccess.individualScores.minimalLooseClothing}/100</span>
-                                          <span>💡 Lighting: {photoValidationSuccess.individualScores.goodLighting}/100</span>
+                                        <div className="space-y-1">
+                                          <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                                            <div className="text-xs text-gray-700">
+                                              📊 Full Body: <span className="font-mono text-green-700">{photoValidationSuccess.individualScores.fullBodyShot}/100</span>
+                                            </div>
+                                            <div className="text-xs text-gray-700">
+                                              🏞️ Background: <span className="font-mono text-green-700">{photoValidationSuccess.individualScores.plainBackground}/100</span>
+                                            </div>
+                                            <div className="text-xs text-gray-700">
+                                              🧍 Pose: <span className="font-mono text-green-700">{photoValidationSuccess.individualScores.neutralPose}/100</span>
+                                            </div>
+                                            <div className="text-xs text-gray-700">
+                                              🔍 Outline: <span className="font-mono text-green-700">{photoValidationSuccess.individualScores.wellDefinedOutline}/100</span>
+                                            </div>
+                                            <div className="text-xs text-gray-700">
+                                              👕 Clothing: <span className="font-mono text-green-700">{photoValidationSuccess.individualScores.minimalLooseClothing}/100</span>
+                                            </div>
+                                            <div className="text-xs text-gray-700">
+                                              💡 Lighting: <span className="font-mono text-green-700">{photoValidationSuccess.individualScores.goodLighting}/100</span>
+                                            </div>
+                                          </div>
+                                          <div className="text-xs text-center text-gray-700">
+                                            📱 Resolution: <span className="font-mono text-green-700">{photoValidationSuccess.individualScores.resolutionQuality}/100</span>
+                                          </div>
                                         </div>
-                                        <p className="text-center mt-1">📱 Resolution: {photoValidationSuccess.individualScores.resolutionQuality}/100</p>
                                       </div>
                                     )}
                                     
@@ -1717,8 +1735,8 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
                       />
                     ) : (
                       <div className="w-80 h-80 bg-gray-200 rounded-lg flex items-center justify-center mx-auto">
-                        <span className="text-gray-500">Image failed to load</span>
-                      </div>
+                    <span className="text-gray-500">Image failed to load</span>
+                  </div>
                     );
                   })()}
                   
@@ -1781,13 +1799,13 @@ Copy the products pixel-perfect. Do not create variations. Do not interpret. Do 
               <h1 className="text-4xl font-bold text-gray-800 mb-2">Ounass Look Generator</h1>
               <p className="text-gray-500">Create custom looks from SKU.</p>
               {/* Simplified AI Art Director with direct text extraction */}
-              <p className="text-xs text-gray-300 mt-1">v1.10.21</p>
+              <p className="text-xs text-gray-300 mt-1">v1.10.22</p>
             </div>
     
             {error && (
               <div className="p-4 mb-6 text-sm text-red-700 bg-red-100 rounded-lg text-left font-medium">
                 <div style={{ whiteSpace: 'pre-line' }}>
-                  {error}
+                {error}
                 </div>
                 <button 
                   onClick={() => setError(null)}
