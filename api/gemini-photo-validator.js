@@ -41,9 +41,9 @@ export default async function handler(req, res) {
 Provide your response in this EXACT format:
 SCORE: [overall percentage 0-100]
 ANALYSIS: [1-2 sentence summary of photo quality and main issues if any]
-RECOMMENDATIONS: [specific improvements needed if score < 80]
+RECOMMENDATIONS: [specific improvements needed if score < 60]
 
-Be strict but fair in your evaluation. Focus on what would make virtual try-on most successful.`;
+Be fair and realistic in your evaluation. Most photos should score 60-80% for virtual try-on. Only reject photos that are clearly unsuitable (blurry, very poor lighting, or completely wrong pose). Focus on what would make virtual try-on most successful.`;
 
     // Clean base64 data (remove data:image/jpeg;base64, prefix)
     const cleanBase64 = userPhoto.replace(/^data:image\/[a-z]+;base64,/, '');
@@ -73,9 +73,12 @@ Be strict but fair in your evaluation. Focus on what would make virtual try-on m
     const recommendations = recommendationsMatch ? recommendationsMatch[1].trim() : '';
 
     console.log(`📈 Photo validation score: ${score}%`);
+    console.log(`📝 Analysis: ${analysis}`);
+    console.log(`💡 Recommendations: ${recommendations}`);
+    console.log(`🎯 Threshold: 60% (was 80%)`);
 
-    // Determine if photo is suitable
-    const isSuitable = score >= 80;
+    // Determine if photo is suitable (lowered threshold for better UX)
+    const isSuitable = score >= 60;
     
     const result_data = {
       suitable: isSuitable,
